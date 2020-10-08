@@ -1,2 +1,7 @@
 # marketplace-stats
-Tool to create reports for paid plugins on the JetBrains marketplace
+This is a tool to create reports for paid plugins on the JetBrains marketplace.
+
+# Building
+
+
+# Using

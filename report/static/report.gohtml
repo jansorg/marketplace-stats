@@ -1,0 +1,409 @@
+{{ $report := . }}
+<html>
+<head>
+    <title>{{$report.PluginInfo.Name}} Sales Report</title>
+    <meta charset="UTF-8">
+    <style type="text/css">
+        @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&display=swap');
+
+        :root {
+            --heading-color: darkblue;
+            --now-color: darkblue;
+            --link-color: orange;
+            --stripe-bgcolor: #ececec;
+        }
+
+        /* reset */
+        html, body, h1, h2, h3, p, div, table, tr, th, td {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* html tags */
+        html {
+            font-family: 'Lato', sans-serif;
+            font-size: 16px;
+        }
+
+        body {
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+
+        h1, h2, h3 {
+            color: var(--heading-color)
+        }
+
+        h1 {
+            font-weight: 900;
+        }
+
+        h2, h3, b, strong {
+            font-weight: 800;
+        }
+
+        a, a:visited {
+            text-decoration: none;
+            color: var(--link-color);
+        }
+
+        table {
+            border-collapse: collapse;
+            margin: 1rem 0 2rem 0;
+        }
+
+        th {
+            text-align: left;
+            vertical-align: baseline;
+        }
+
+        th, td {
+            padding: .1rem .35rem;
+        }
+
+        th:last-child, td:last-child {
+            padding-right: 0;
+        }
+
+        th:first-child, td:first-child {
+            padding-left: 0;
+        }
+
+        thead th {
+            border-bottom: 1px solid black;
+        }
+
+        thead h2 {
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+
+        tfoot th {
+            border-top: 1px solid black;
+        }
+
+        /* custom */
+        .table-striped tbody tr:nth-child(odd) {
+            background-color: var(--stripe-bgcolor);
+        }
+
+        .small {
+            font-size: .8rem;
+        }
+
+        .table-even {
+            width: 50%;
+            table-layout: fixed;
+        }
+
+        .table-even th, .tabel-even td {
+        }
+
+        .num, .month {
+            font-variant: common-ligatures tabular-nums;
+            white-space: nowrap;
+        }
+
+        th.num, td.num {
+            text-align: right;
+        }
+
+        .today {
+            color: var(--now-color);
+            font-weight: 800;
+        }
+
+        .sections {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .section {
+            width: 50%;
+            margin: 0 0 2rem 0;
+        }
+
+        .section-small {
+            width: auto;
+            margin: 0 1rem 0 0;
+        }
+
+        .section-wide {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+<h1>{{$report.PluginInfo.Name}} Sales Report</h1>
+
+<div class="section section-customers section-small">
+    <table>
+        <tbody>
+        <tr>
+            <th>Total</th>
+            <td class="num">{{.Sales.TotalSumUSD.Format}} USD</td>
+        </tr>
+        <tr>
+            <th>Fees</th>
+            <td class="num">{{.Sales.FeeSumUSD.Format}} USD</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="sections">
+    <div class="section section-currentweek section-small">
+        <table class="small">
+            <thead>
+            <tr>
+                <th class="num"><h2>This week</h2></th>
+                <th class="num">Sales</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .Week.Days }}
+                <tr {{ if .IsToday }}class="today"{{end}}>
+                    <td class="num">{{.Name}}</td>
+                    <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
+                </tr>
+            {{ end }}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th class="num">
+                {{.Week.Name}}</td>
+                <th class="num">{{ .Week.TotalSalesUSD.Total.Format }} USD
+                </td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="section section-yearly section-small">
+        <table class="small">
+            <thead>
+            <tr>
+                <th><h2>Yearly Sales</h2></th>
+                <th class="num">Sales</th>
+                <th class="num">Fees</th>
+                <th class="num">Paid Out</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .Years }}
+                <tr>
+                    <td>{{.Name}}</td>
+                    <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
+                    <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
+                    <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="sections">
+    <div class="section section-monthly">
+        <table class="small">
+            <thead>
+            <tr>
+                <th><h2>Monthly Sales</h2></th>
+                <th class="num">Total</th>
+                <th class="num">Fees</th>
+                <th class="num" title="Total minus fees">Paid Out</th>
+                <th class="num" title="A rough estimate of the annual recurring revenue">ARR</th>
+                <th class="num" title="Active customers of a month">Cust.</th>
+                <th class="num" title="Monthly churned users">Churn</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .Months }}
+                <tr {{ if .IsActiveMonth }}class="today"{{end}}>
+                    <td class="month">{{.Name}}</td>
+                    <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
+                    <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
+                    <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
+                    <td class="num">{{ if .IsActiveMonth }}—{{ else }} {{- .AnnualRevenueUSD.Format }} USD{{ end }}</td>
+                    <td class="num"
+                        title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly - {{len .ChurnedCustomers}} churned = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly ">{{ .ActiveCustomersTotal }}</td>
+                    <td class="num num-percentage">
+                        {{ if .HasChurnRate }}
+                            <span title="{{len .ChurnedCustomers}} of {{.ChurnRateTotalCustomers}}">
+                            {{ if gt (len .ChurnedCustomers) 0 }}
+                                <a href="#churn-{{ .Name }}">{{- printf "%.2f" .ChurnRatePercentage }}%</a>
+                            {{ else }}
+                                —
+                            {{ end }}
+                        </span>
+                        {{ else }}
+                            —
+                        {{ end }}
+                    </td>
+                </tr>
+            {{ end }}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th></th>
+                <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
+                <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
+                <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="sections">
+    <div class="section section-small section-countries">
+        <table class="small">
+            <thead>
+            <tr>
+                <th><h2>Countries</h2></th>
+                <th class="num">Total</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ range (slice .CountrySales 0 10) }}
+                <tr>
+                    <td>{{.Country}}</td>
+                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section section-small section-countries">
+        <table class="small">
+            <thead>
+            <tr>
+                <th><h2>Currencies</h2></th>
+                <th class="num">Total</th>
+                <th class="num">Total USD</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ range .CurrencySales }}
+                <tr>
+                    <td>{{.Currency}}</td>
+                    <td class="num"
+                        title="{{ len .Sales }} sale(s)">{{ if ne "USD" .Currency}}{{.TotalSales.Format}} {{ .Currency }}{{end}}</td>
+                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalSalesUSD.Format}} USD</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section section-small section-license-type">
+        <table class="small">
+            <thead>
+            <tr>
+                <th class="num"><h2>Type</h2></th>
+                <th>Type</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ range .SubscriptionSales }}
+                <tr>
+                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
+                    <td>{{.Name}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section section-small section-license-type">
+        <table class="small">
+            <thead>
+            <tr>
+                <th class="num"><h2>Customer Type</h2></th>
+                <th>Type</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ range .CustomerTypeSales }}
+                <tr>
+                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
+                    <td>{{.Name}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="sections">
+    <div class="section section-customers section-wide">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th class="num"><h2>By Customer</h2></th>
+                <th class="num">ID</th>
+                <th>Name</th>
+                <th>Country</th>
+                <th>Type</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ range .CustomerSales }}
+                <tr>
+                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
+                    <td class="num">{{.Customer.ID}}</td>
+                    <td>{{.Customer.Name}}</td>
+                    <td>{{.Customer.Country}}</td>
+                    <td>{{.Customer.Type}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h2>Monthly Churned Users</h2>
+{{ range .Months }}
+    {{ if eq (len .ChurnedCustomers) 0 }}
+        <table class="table-even small" id="churn-{{.Name}}">
+            <thead>
+            <tr>
+                <th><h3>{{.Name}}</h3></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>—</td>
+            </tr>
+            </tbody>
+        </table>
+    {{ else }}
+        <table class="table-even small" id="churn-{{.Name}}">
+            <thead>
+            <tr>
+                <th><h3>{{.Name}}</h3></th>
+                <th>ID</th>
+                <th>Type</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .ChurnedCustomers.SortByID }}
+                <tr>
+                    <td>{{ .Name }}</td>
+                    <td>{{ .ID }}</td>
+                    <td>{{ .Type }}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    {{ end }}
+{{ end }}
+</body>
+</html>
