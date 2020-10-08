@@ -36,6 +36,16 @@
 
         h1 {
             font-weight: 900;
+            font-size: 2.5rem;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+        }
+
+        h3 {
+            font-size: 1rem;
         }
 
         h2, h3, b, strong {
@@ -73,8 +83,8 @@
             border-bottom: 1px solid black;
         }
 
-        thead h2 {
-            font-size: 1rem;
+        thead h2, thead h3 {
+            font-size: 1em;
             white-space: nowrap;
         }
 
@@ -137,11 +147,15 @@
 </head>
 
 <body>
-<h1>{{$report.PluginInfo.Name}} Sales Report</h1>
+<h1>{{$report.PluginInfo.Name}}</h1>
 
 <div class="section section-customers section-small">
     <table>
         <tbody>
+        <tr>
+            <th>Date</th>
+            <td class="date">{{.Date.Format "2006-01-02"}}</td>
+        </tr>
         <tr>
             <th>Total</th>
             <td class="num">{{.Sales.TotalSumUSD.Format}} USD</td>
@@ -218,6 +232,7 @@
                 <th class="num" title="A rough estimate of the annual recurring revenue">ARR</th>
                 <th class="num" title="Active customers of a month">Cust.</th>
                 <th class="num" title="Monthly churned users">Churn</th>
+                <th class="num" title="Total Downloads">Downloads</th>
             </tr>
             </thead>
             <tbody>
@@ -243,6 +258,7 @@
                             —
                         {{ end }}
                     </td>
+                    <td class="num">{{.DownloadsTotal}}</td>
                 </tr>
             {{ end }}
             </tbody>
@@ -252,6 +268,7 @@
                 <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
                 <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
                 <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
+                <th></th>
                 <th></th>
                 <th></th>
                 <th></th>

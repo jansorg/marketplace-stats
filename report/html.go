@@ -4,12 +4,15 @@ package report
 
 import (
 	"html/template"
+	"strings"
+	"time"
+
 	"jansorg/marketplace-stats/marketplace"
 	"jansorg/marketplace-stats/statistic"
-	"strings"
 )
 
 type HTMLReport struct {
+	Date       time.Time
 	PluginInfo marketplace.PluginInfo
 
 	Sales                    marketplace.Sales
@@ -35,6 +38,7 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, ye
 	week.Update(allSales)
 
 	return HTMLReport{
+		Date:                     time.Now(),
 		PluginInfo:               pluginInfo,
 		Sales:                    allSales,
 		Customers:                customers.SortByID(),
@@ -54,9 +58,10 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, ye
 }
 
 func (r HTMLReport) Generate() (string, error) {
-	// language=HTML
+	funcMap := template.FuncMap{}
+
 	templateString := FSMustString(false, "/static/report.gohtml")
-	report, err := template.New("basic").Parse(templateString)
+	report, err := template.New("basic").Funcs(funcMap).Parse(templateString)
 	if err != nil {
 		return "", err
 	}

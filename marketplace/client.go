@@ -34,6 +34,59 @@ func (c *Client) GetPluginInfo(id string) (PluginInfo, error) {
 	return plugin, err
 }
 
+func (c *Client) DownloadsMonthly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadsMonthly, error) {
+	resp, err := c.Downloads("month", uniqueDownloads, channel, build, product, country, productCommonCode)
+	if err != nil {
+		return nil, err
+	}
+
+	var months []DownloadsMonthly
+	for _, d := range resp.Data.Serie {
+		parsedDate, err := time.ParseInLocation("2006-01-02", d.Name, ServerTimeZone)
+		if err != nil {
+			return nil, err
+		}
+
+		months = append(months, DownloadsMonthly{
+			Year:      parsedDate.Year(),
+			Month:     parsedDate.Month(),
+			Downloads: d.Value,
+		})
+	}
+	return months, nil
+}
+
+func (c *Client) Downloads(period string, uniqueDownloads bool, channel, build, product, country, productCommonCode string) (DownloadResponse, error) {
+	params := map[string]string{
+		"plugin": c.pluginID,
+	}
+
+	if channel != "" {
+		params["channel"] = channel
+	}
+	if build != "" {
+		params["build"] = build
+	}
+	if product != "" {
+		params["product"] = product
+	}
+	if country != "" {
+		params["country"] = country
+	}
+	if productCommonCode != "" {
+		params["product-common-code"] = productCommonCode
+	}
+
+	downloadType := "downloads-count"
+	if uniqueDownloads {
+		downloadType = "downloads-unique"
+	}
+
+	var resp DownloadResponse
+	err := c.GetJSON(fmt.Sprintf("/statistic/%s/%s", downloadType, period), params, &resp)
+	return resp, err
+}
+
 func (c *Client) GetAllSalesInfo() ([]Sale, error) {
 	y, m, d := time.Now().Date()
 	return c.GetSalesInfo(NewYearMonthDay(2019, 06, 25), NewYearMonthDay(y, int(m), d))

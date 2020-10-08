@@ -44,6 +44,11 @@ func main() {
 	pluginInfo, err = client.GetCurrentPluginInfo()
 	fatalOpt(err)
 
+	monthlyDownloadsUnique, err := client.DownloadsMonthly(false, "", "", "", "", "")
+	fatalOpt(err)
+	monthlyDownloadsTotal, err := client.DownloadsMonthly(true, "", "", "", "", "")
+	fatalOpt(err)
+
 	if *fetchOnlineFlag {
 		sales, err = client.GetAllSalesInfo()
 		fatalOpt(err)
@@ -76,21 +81,13 @@ func main() {
 		var prevMonthData *statistic.Month
 		for !yearMonth.After(lastDate) && !yearMonth.After(lastDateCurrentMonth) {
 			month := statistic.NewMonthForDate(yearMonth)
-			month.Update(sales, prevMonthData)
+			month.Update(sales, prevMonthData, monthlyDownloadsTotal, monthlyDownloadsUnique)
 
 			months = append(months, month)
 			yearMonth = yearMonth.AddDate(0, 1, 0)
 			prevMonthData = month
 		}
 	}
-
-	//fmt.Printf("%d months\n", len(months))
-	//for _, m := range months {
-	//    fmt.Printf("[%s]\n", m.Date.Format("2006-01"))
-	//    fmt.Printf("\tTotal: %.2f USD\tFees: %.2f USD\tPaid out: %.2f\n", m.TotalSalesUSD.Total, m.TotalSalesUSD.Fee, m.TotalSalesUSD.PaidOut())
-	//    fmt.Printf("\tChurn: %.2f%%, %d of %d users\n", m.ChurnRatePercentage, len(m.ChurnedCustomers), m.CustomersMonthly+len(m.ChurnedCustomers))
-	//    fmt.Println()
-	//}
 
 	// iterate years
 	var years []*statistic.Year
@@ -107,14 +104,6 @@ func main() {
 			year = year.AddDate(1, 0, 0)
 		}
 	}
-
-	//fmt.Printf("%d years\n", len(years))
-	//for _, y := range years {
-	//    fmt.Printf("[%d]\n", y.Year)
-	//    fmt.Printf("\tTotal: %.2f USD\tFees: %.2f USD\tPaid out: %.2f\n", y.TotalSalesUSD.Total, y.TotalSalesUSD.Fee, y.TotalSalesUSD.PaidOut())
-	//    fmt.Printf("\tSubscriptions: %d\tAnnual: %d\tMonthly: %d\n", y.TotalCustomers, y.TotalCustomersAnnual, y.TotalCustomersMonthly)
-	//    fmt.Println()
-	//}
 
 	if *reportFileParam != "" {
 		r := report.NewReport(pluginInfo, sales, years, months)
