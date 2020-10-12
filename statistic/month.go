@@ -3,7 +3,7 @@ package statistic
 import (
 	"time"
 
-	"jansorg/marketplace-stats/marketplace"
+	"github.com/jansorg/marketplace-stats/marketplace"
 )
 
 type Month struct {

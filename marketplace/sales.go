@@ -16,11 +16,11 @@ type AccountType string
 type Sales []Sale
 
 const (
-	AnnualSubscription      Subscription = "Annual"
-	MonthlySubscription     Subscription = "Monthly"
+	AnnualSubscription  Subscription = "Annual"
+	MonthlySubscription Subscription = "Monthly"
 
-	AccountTypePersonal     AccountType  = "Personal"
-	AccountTypeOrganization AccountType  = "Organization"
+	AccountTypePersonal     AccountType = "Personal"
+	AccountTypeOrganization AccountType = "Organization"
 )
 
 // FilterBy returns a new Sales slice, which contains all items, were the keep function returned true

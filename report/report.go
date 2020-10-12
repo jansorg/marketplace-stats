@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"jansorg/marketplace-stats/marketplace"
-	"jansorg/marketplace-stats/statistic"
+	"github.com/jansorg/marketplace-stats/marketplace"
+	"github.com/jansorg/marketplace-stats/statistic"
 )
 
 type HTMLReport struct {
@@ -23,7 +23,6 @@ type HTMLReport struct {
 	FreeSubscriptionCount    int
 
 	Week              *statistic.Week
-	Months            []*statistic.Month
 	Years             []*statistic.Year
 	CustomerSales     []*marketplace.CustomerSales
 	CountrySales      []*marketplace.CountrySales
@@ -32,7 +31,7 @@ type HTMLReport struct {
 	CurrencySales     []*marketplace.CurrencySales
 }
 
-func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, years []*statistic.Year, months []*statistic.Month) HTMLReport {
+func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, years []*statistic.Year) HTMLReport {
 	customers := allSales.Customers()
 	week := statistic.NewWeekToday(marketplace.ServerTimeZone)
 	week.Update(allSales)
@@ -52,7 +51,6 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, ye
 		MonthlySubscriptionCount: len(allSales.ByMonthlySubscription().Customers()),
 		FreeSubscriptionCount:    len(allSales.ByFreeSubscription().Customers()),
 		Week:                     week,
-		Months:                   months,
 		Years:                    years,
 	}
 }

@@ -1,4 +1,4 @@
-module jansorg/marketplace-stats
+module github.com/jansorg/marketplace-stats
 
 go 1.15
 

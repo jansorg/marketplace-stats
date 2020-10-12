@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"jansorg/marketplace-stats/marketplace"
+	"github.com/jansorg/marketplace-stats/marketplace"
 )
 
 type Week struct {

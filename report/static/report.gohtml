@@ -7,22 +7,23 @@
         @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&display=swap');
 
         :root {
-            --heading-color: darkblue;
-            --now-color: darkblue;
-            --link-color: orange;
-            --stripe-bgcolor: #ececec;
+            --heading-color: #00008b;
+            --now-color: #00008b;
+            --link-color: #4545e6;
+            --stripe-bgcolor: #f2f2f2;
+            --separator-color: #808080;
         }
 
         /* reset */
         html, body, h1, h2, h3, p, div, table, tr, th, td {
             margin: 0;
             padding: 0;
+            line-height: 1.4;
         }
 
         /* html tags */
         html {
             font-family: 'Lato', sans-serif;
-            font-size: 16px;
         }
 
         body {
@@ -80,7 +81,7 @@
         }
 
         thead th {
-            border-bottom: 1px solid black;
+            border-bottom: 1px solid var(--separator-color);
         }
 
         thead h2, thead h3 {
@@ -89,10 +90,18 @@
         }
 
         tfoot th {
-            border-top: 1px solid black;
+            border-top: 1px solid var(--separator-color);
         }
 
         /* custom */
+        .subtitle {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 300;
+            line-height: 1.5rem;
+            margin: 0 0 2rem 0;
+        }
+
         .table-striped tbody tr:nth-child(odd) {
             background-color: var(--stripe-bgcolor);
         }
@@ -109,12 +118,12 @@
         .table-even th, .tabel-even td {
         }
 
-        .num, .month {
+        .num, .month, .date {
             font-variant: common-ligatures tabular-nums;
             white-space: nowrap;
         }
 
-        th.num, td.num {
+        th.num, td.num, th.date, td.date {
             text-align: right;
         }
 
@@ -140,7 +149,7 @@
             margin: 0 1rem 0 0;
         }
 
-        .section-wide {
+        .section-wide, .section-wide table {
             width: 100%;
         }
     </style>
@@ -148,49 +157,29 @@
 
 <body>
 <h1>{{$report.PluginInfo.Name}}</h1>
-
-<div class="section section-customers section-small">
-    <table>
-        <tbody>
-        <tr>
-            <th>Date</th>
-            <td class="date">{{.Date.Format "2006-01-02"}}</td>
-        </tr>
-        <tr>
-            <th>Total</th>
-            <td class="num">{{.Sales.TotalSumUSD.Format}} USD</td>
-        </tr>
-        <tr>
-            <th>Fees</th>
-            <td class="num">{{.Sales.FeeSumUSD.Format}} USD</td>
-        </tr>
-        </tbody>
-    </table>
-</div>
+<h2 class="subtitle">{{.Date.Format "2006-01-02"}}</h2>
 
 <div class="sections">
     <div class="section section-currentweek section-small">
-        <table class="small">
+        <table class="small table-striped">
             <thead>
             <tr>
-                <th class="num"><h2>This week</h2></th>
+                <th><h2>This week</h2></th>
                 <th class="num">Sales</th>
             </tr>
             </thead>
             <tbody>
             {{ range .Week.Days }}
                 <tr {{ if .IsToday }}class="today"{{end}}>
-                    <td class="num">{{.Name}}</td>
+                    <td>{{.Name}}</td>
                     <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                 </tr>
             {{ end }}
             </tbody>
             <tfoot>
             <tr>
-                <th class="num">
-                {{.Week.Name}}</td>
-                <th class="num">{{ .Week.TotalSalesUSD.Total.Format }} USD
-                </td>
+                <th>{{.Week.Name}}</th>
+                <th class="num">{{ .Week.TotalSalesUSD.Total.Format }} USD</th>
             </tr>
             </tfoot>
         </table>
@@ -209,69 +198,19 @@
             <tbody>
             {{ range .Years }}
                 <tr>
-                    <td>{{.Name}}</td>
+                    <td class="date">{{.Name}}</td>
                     <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                     <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                     <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
-                </tr>
-            {{ end }}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="sections">
-    <div class="section section-monthly">
-        <table class="small">
-            <thead>
-            <tr>
-                <th><h2>Monthly Sales</h2></th>
-                <th class="num">Total</th>
-                <th class="num">Fees</th>
-                <th class="num" title="Total minus fees">Paid Out</th>
-                <th class="num" title="A rough estimate of the annual recurring revenue">ARR</th>
-                <th class="num" title="Active customers of a month">Cust.</th>
-                <th class="num" title="Monthly churned users">Churn</th>
-                <th class="num" title="Total Downloads">Downloads</th>
-            </tr>
-            </thead>
-            <tbody>
-            {{ range .Months }}
-                <tr {{ if .IsActiveMonth }}class="today"{{end}}>
-                    <td class="month">{{.Name}}</td>
-                    <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
-                    <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
-                    <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
-                    <td class="num">{{ if .IsActiveMonth }}—{{ else }} {{- .AnnualRevenueUSD.Format }} USD{{ end }}</td>
-                    <td class="num"
-                        title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly - {{len .ChurnedCustomers}} churned = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly ">{{ .ActiveCustomersTotal }}</td>
-                    <td class="num num-percentage">
-                        {{ if .HasChurnRate }}
-                            <span title="{{len .ChurnedCustomers}} of {{.ChurnRateTotalCustomers}}">
-                            {{ if gt (len .ChurnedCustomers) 0 }}
-                                <a href="#churn-{{ .Name }}">{{- printf "%.2f" .ChurnRatePercentage }}%</a>
-                            {{ else }}
-                                —
-                            {{ end }}
-                        </span>
-                        {{ else }}
-                            —
-                        {{ end }}
-                    </td>
-                    <td class="num">{{.DownloadsTotal}}</td>
                 </tr>
             {{ end }}
             </tbody>
             <tfoot>
             <tr>
                 <th></th>
-                <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
-                <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
-                <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
+                <th class="num">{{.Sales.TotalSumUSD.Format}} USD</th>
+                <th class="num">{{.Sales.FeeSumUSD.Format}} USD</th>
+                <th class="num">{{.Sales.PaidOutUSD.Format}} USD</th>
             </tr>
             </tfoot>
         </table>
@@ -279,12 +218,71 @@
 </div>
 
 <div class="sections">
+    <div class="section section-wide section-monthly">
+        <table class="small table-striped">
+            {{ range $report.Years }}
+                <thead>
+                <tr>
+                    <th><h2>{{.Year}}</h2></th>
+                    <th class="num">Total</th>
+                    <th class="num">Fees</th>
+                    <th class="num" title="Total minus fees">Paid Out</th>
+                    <th class="num" title="A rough estimate of the annual recurring revenue">ARR</th>
+                    <th class="num" title="Active customers of a month">Cust.</th>
+                    <th class="num" title="Monthly churned users">Churn</th>
+                    <th class="num" title="Total Downloads">Downloads</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{ range .Months }}
+                    <tr {{ if .IsActiveMonth }}class="today"{{end}}>
+                        <td class="month">{{.Name}}</td>
+                        <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
+                        <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
+                        <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
+                        <td class="num">{{ if .IsActiveMonth }}—{{ else }} {{- .AnnualRevenueUSD.Format }} USD{{ end }}</td>
+                        <td class="num"
+                            title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly - {{len .ChurnedCustomers}} churned = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly ">{{ .ActiveCustomersTotal }}</td>
+                        <td class="num num-percentage">
+                            {{ if .HasChurnRate }}
+                                <span title="{{len .ChurnedCustomers}} of {{.ChurnRateTotalCustomers}}">
+                            {{ if gt (len .ChurnedCustomers) 0 }}
+                                <a href="#churn-{{ .Name }}">{{- printf "%.2f" .ChurnRatePercentage }}%</a>
+                            {{ else }}
+                                —
+                            {{ end }}
+                        </span>
+                            {{ else }}
+                                —
+                            {{ end }}
+                        </td>
+                        <td class="num">{{.DownloadsTotal}}</td>
+                    </tr>
+                {{ end }}
+                </tbody>
+                <tfoot>
+                <tr>
+                    <th></th>
+                    <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
+                    <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
+                    <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </tfoot>
+            {{ end }}
+        </table>
+    </div>
+</div>
+
+<div class="sections">
     <div class="section section-small section-countries">
-        <table class="small">
+        <table class="small table-striped">
             <thead>
             <tr>
-                <th><h2>Countries</h2></th>
-                <th class="num">Total</th>
+                <th colspan="2"><h2>Top Countries</h2></th>
             </tr>
             </thead>
             <tbody class="small">
@@ -299,20 +297,17 @@
     </div>
 
     <div class="section section-small section-countries">
-        <table class="small">
+        <table class="small table-striped">
             <thead>
             <tr>
-                <th><h2>Currencies</h2></th>
-                <th class="num">Total</th>
-                <th class="num">Total USD</th>
+                <th colspan="3"><h2>Top Currencies</h2></th>
             </tr>
             </thead>
             <tbody class="small">
             {{ range .CurrencySales }}
                 <tr>
                     <td>{{.Currency}}</td>
-                    <td class="num"
-                        title="{{ len .Sales }} sale(s)">{{ if ne "USD" .Currency}}{{.TotalSales.Format}} {{ .Currency }}{{end}}</td>
+                    <td class="num" title="{{ len .Sales }} sale(s)">{{ if ne "USD" .Currency}}{{.TotalSales.Format}}{{end}}</td>
                     <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalSalesUSD.Format}} USD</td>
                 </tr>
             {{ end }}
@@ -321,18 +316,17 @@
     </div>
 
     <div class="section section-small section-license-type">
-        <table class="small">
+        <table class="small table-striped">
             <thead>
             <tr>
-                <th class="num"><h2>Type</h2></th>
-                <th>Type</th>
+                <th colspan="2"><h2>Subscription</h2></th>
             </tr>
             </thead>
             <tbody class="small">
             {{ range .SubscriptionSales }}
                 <tr>
-                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
                     <td>{{.Name}}</td>
+                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
                 </tr>
             {{ end }}
             </tbody>
@@ -340,11 +334,10 @@
     </div>
 
     <div class="section section-small section-license-type">
-        <table class="small">
+        <table class="small table-striped">
             <thead>
             <tr>
-                <th class="num"><h2>Customer Type</h2></th>
-                <th>Type</th>
+                <th colspan="2"><h2>Customer Type</h2></th>
             </tr>
             </thead>
             <tbody class="small">
@@ -387,39 +380,41 @@
 </div>
 
 <h2>Monthly Churned Users</h2>
-{{ range .Months }}
-    {{ if eq (len .ChurnedCustomers) 0 }}
-        <table class="table-even small" id="churn-{{.Name}}">
-            <thead>
-            <tr>
-                <th><h3>{{.Name}}</h3></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>—</td>
-            </tr>
-            </tbody>
-        </table>
-    {{ else }}
-        <table class="table-even small" id="churn-{{.Name}}">
-            <thead>
-            <tr>
-                <th><h3>{{.Name}}</h3></th>
-                <th>ID</th>
-                <th>Type</th>
-            </tr>
-            </thead>
-            <tbody>
-            {{ range .ChurnedCustomers.SortByID }}
+{{ range $report.Years }}
+    {{ range .Months }}
+        {{ if eq (len .ChurnedCustomers) 0 }}
+            <table class="table-even small" id="churn-{{.Name}}">
+                <thead>
                 <tr>
-                    <td>{{ .Name }}</td>
-                    <td>{{ .ID }}</td>
-                    <td>{{ .Type }}</td>
+                    <th><h3>{{.Name}}</h3></th>
                 </tr>
-            {{ end }}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>—</td>
+                </tr>
+                </tbody>
+            </table>
+        {{ else }}
+            <table class="table-even small" id="churn-{{.Name}}">
+                <thead>
+                <tr>
+                    <th><h3>{{.Name}}</h3></th>
+                    <th>ID</th>
+                    <th>Type</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{ range .ChurnedCustomers.SortByID }}
+                    <tr>
+                        <td>{{ .Name }}</td>
+                        <td>{{ .ID }}</td>
+                        <td>{{ .Type }}</td>
+                    </tr>
+                {{ end }}
+                </tbody>
+            </table>
+        {{ end }}
     {{ end }}
 {{ end }}
 </body>

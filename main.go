@@ -7,11 +7,10 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"time"
 
-	"jansorg/marketplace-stats/marketplace"
-	"jansorg/marketplace-stats/report"
-	"jansorg/marketplace-stats/statistic"
+	"github.com/jansorg/marketplace-stats/marketplace"
+	"github.com/jansorg/marketplace-stats/report"
+	"github.com/jansorg/marketplace-stats/statistic"
 )
 
 func fatalOpt(err error) {
@@ -21,7 +20,7 @@ func fatalOpt(err error) {
 }
 
 func main() {
-	pluginIDFlag := flag.String("pluginID", "13841", "The ID of the plugin, e.g. 12345.")
+	pluginIDFlag := flag.String("pluginID", "", "The ID of the plugin, e.g. 12345.")
 	fetchOnlineFlag := flag.Bool("fetch", false, "If online data should be fetched. Needs the --token flag.")
 	tokenParam := flag.String("token", "", "The token to access the API of the JetBrains marketplace.")
 	tokenFileParam := flag.String("tokenFile", "", "Path to a file, which contains the token")
@@ -32,6 +31,10 @@ func main() {
 	if *fetchOnlineFlag && *tokenParam == "" && *tokenFileParam == "" {
 		fmt.Fprintf(os.Stderr, "Unable to load sales data without a token. Please provide the marketplace API token.\n")
 		return
+	}
+
+	if *pluginIDFlag == "" {
+		log.Fatal("Plugin ID not defined. Use -pluginID to define it.")
 	}
 
 	var sales []marketplace.Sale
@@ -68,27 +71,6 @@ func main() {
 		fatalOpt(err)
 	}
 
-	// iterate months
-	var months []*statistic.Month
-	if len(sales) > 0 {
-		firstDate := sales[0].Date.AsDate()
-		lastDate := sales[len(sales)-1].Date.AsDate().AddDate(0, 1, 0)
-		yearMonth := firstDate
-
-		now := time.Now().In(marketplace.ServerTimeZone)
-		lastDateCurrentMonth := now.AddDate(0, 1, -now.Day())
-
-		var prevMonthData *statistic.Month
-		for !yearMonth.After(lastDate) && !yearMonth.After(lastDateCurrentMonth) {
-			month := statistic.NewMonthForDate(yearMonth)
-			month.Update(sales, prevMonthData, monthlyDownloadsTotal, monthlyDownloadsUnique)
-
-			months = append(months, month)
-			yearMonth = yearMonth.AddDate(0, 1, 0)
-			prevMonthData = month
-		}
-	}
-
 	// iterate years
 	var years []*statistic.Year
 	if len(sales) > 0 {
@@ -98,7 +80,7 @@ func main() {
 
 		for !year.After(lastDate) {
 			stats := statistic.NewYear(year.Year())
-			stats.Update(sales)
+			stats.Update(sales, monthlyDownloadsTotal, monthlyDownloadsUnique)
 
 			years = append(years, stats)
 			year = year.AddDate(1, 0, 0)
@@ -106,7 +88,7 @@ func main() {
 	}
 
 	if *reportFileParam != "" {
-		r := report.NewReport(pluginInfo, sales, years, months)
+		r := report.NewReport(pluginInfo, sales, years)
 		html, err := r.Generate()
 		fatalOpt(err)
 
