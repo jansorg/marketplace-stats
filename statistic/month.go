@@ -131,16 +131,27 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 				m.AnnualRevenueUSD += sale.AmountUSD
 			}
 		}
+
+		// factor, if the current month isn't finished yet
+		monthSalesFactor := 1.0
+		if m.IsActiveMonth() {
+			y, m, d := time.Now().In(marketplace.ServerTimeZone).Date()
+			lastDay := time.Date(y, m, 1, 0, 0, 0, 0, marketplace.ServerTimeZone).AddDate(0, 1, -1).Day()
+			monthSalesFactor = float64(lastDay) / float64(d)
+			//fmt.Println(monthSalesFactor)
+		}
+
 		for _, sale := range currentMonthSales {
 			if sale.Period == marketplace.MonthlySubscription {
-				m.AnnualRevenueUSD += sale.AmountUSD * 12
+				m.AnnualRevenueUSD += sale.AmountUSD * 12 * marketplace.Amount(monthSalesFactor)
 			} else if sale.Period == marketplace.AnnualSubscription {
-				m.AnnualRevenueUSD += sale.AmountUSD
+				m.AnnualRevenueUSD += sale.AmountUSD * marketplace.Amount(monthSalesFactor)
 			}
 		}
 
 		monthsWithSales := m.Date.In(marketplace.ServerTimeZone).Month() - currentYearSales[0].Date.Month()
 		projectionFactor := 1.0 + float64(12.0-monthsWithSales)/12.0
+		// fixme don't use 80%, but 100%, for 4th year and later
 		m.AnnualRevenueUSD = m.AnnualRevenueUSD * marketplace.Amount(projectionFactor) * 0.8
 	}
 }

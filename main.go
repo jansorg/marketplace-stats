@@ -20,30 +20,31 @@ func fatalOpt(err error) {
 }
 
 func main() {
-	pluginIDFlag := flag.String("pluginID", "", "The ID of the plugin, e.g. 12345.")
-	fetchOnlineFlag := flag.Bool("fetch", false, "If online data should be fetched. Needs the --token flag.")
-	tokenParam := flag.String("token", "", "The token to access the API of the JetBrains marketplace.")
-	tokenFileParam := flag.String("tokenFile", "", "Path to a file, which contains the token")
-	fileParam := flag.String("cache-file", "sales.json", "The file where sales data is cached. Use -fetch to update it.")
-	reportFileParam := flag.String("html", "report.html", "The file where the HTML sales report is saved.")
+	pluginID := flag.String("plugin-id", "", "The ID of the plugin, e.g. 12345.")
+	tokenParam := flag.String("token", "", "The token to access the API of the JetBrains marketplace. --token-file is an alternative.")
+	tokenFileParam := flag.String("token-file", "", "Path to a file, which contains the token to access the API of the JetBrains marketplace.")
+	fileParam := flag.String("cache-file", "", "The file where sales data is cached. Use -fetch to update it.")
+	fetchParam := flag.Bool("fetch", true, "The file where sales data is cached. Use -fetch to update it.")
+	reportFileParam := flag.String("out", "report.html", "The file where the HTML sales report is saved.")
 	flag.Parse()
 
-	if *fetchOnlineFlag && *tokenParam == "" && *tokenFileParam == "" {
-		fmt.Fprintf(os.Stderr, "Unable to load sales data without a token. Please provide the marketplace API token.\n")
+	if *pluginID == "" {
+		fmt.Fprintln(os.Stderr, "Plugin ID not defined. Use --plugin-id to define it.")
 		return
 	}
 
-	if *pluginIDFlag == "" {
-		log.Fatal("Plugin ID not defined. Use -pluginID to define it.")
+	if *fetchParam && *tokenParam == "" && *tokenFileParam == "" {
+		fmt.Fprintln(os.Stderr, "Unable to load sales data without a token. Please provide the marketplace API token.")
+		return
 	}
+
+	token, err := getToken(*tokenParam, *tokenFileParam)
+	fatalOpt(err)
 
 	var sales []marketplace.Sale
 	var pluginInfo marketplace.PluginInfo
 
-	token, err := getToken(*tokenParam, *tokenFileParam)
-	fatalOpt(err)
-	client := marketplace.NewClient(*pluginIDFlag, token)
-
+	client := marketplace.NewClient(*pluginID, token)
 	pluginInfo, err = client.GetCurrentPluginInfo()
 	fatalOpt(err)
 
@@ -52,21 +53,22 @@ func main() {
 	monthlyDownloadsTotal, err := client.DownloadsMonthly(true, "", "", "", "", "")
 	fatalOpt(err)
 
-	if *fetchOnlineFlag {
+	if *fetchParam {
 		sales, err = client.GetAllSalesInfo()
 		fatalOpt(err)
 
-		// write to cache file
-		cacheFile, err := os.OpenFile(*fileParam, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-		defer cacheFile.Close()
-		encoder := json.NewEncoder(cacheFile)
-		encoder.SetIndent("", "  ")
-		err = encoder.Encode(sales)
-		fatalOpt(err)
+		// write to cache file, if it's defined
+		if *fileParam != "" {
+			cacheFile, err := os.OpenFile(*fileParam, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+			defer cacheFile.Close()
+			encoder := json.NewEncoder(cacheFile)
+			encoder.SetIndent("", "  ")
+			err = encoder.Encode(sales)
+			fatalOpt(err)
+		}
 	} else {
 		file, err := os.Open(*fileParam)
 		fatalOpt(err)
-
 		err = json.NewDecoder(file).Decode(&sales)
 		fatalOpt(err)
 	}
@@ -87,13 +89,15 @@ func main() {
 		}
 	}
 
-	if *reportFileParam != "" {
-		r := report.NewReport(pluginInfo, sales, years)
-		html, err := r.Generate()
-		fatalOpt(err)
+	html, err := report.NewReport(pluginInfo, sales, years).Generate()
+	fatalOpt(err)
 
+	if *reportFileParam != "" && *reportFileParam != "-" {
 		err = ioutil.WriteFile(*reportFileParam, []byte(html), 0600)
 		fatalOpt(err)
+	} else {
+		// print to stdout
+		fmt.Println(html)
 	}
 }
 

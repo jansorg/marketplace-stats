@@ -56,7 +56,14 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, ye
 }
 
 func (r HTMLReport) Generate() (string, error) {
-	funcMap := template.FuncMap{}
+	funcMap := template.FuncMap{
+		"addInt": func(a, b int) int {
+			return a + b
+		},
+		"subInt": func(a, b int) int {
+			return a - b
+		},
+	}
 
 	templateString := FSMustString(false, "/static/report.gohtml")
 	report, err := template.New("basic").Funcs(funcMap).Parse(templateString)

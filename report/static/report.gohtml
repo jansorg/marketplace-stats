@@ -69,7 +69,7 @@
         }
 
         th, td {
-            padding: .1rem .35rem;
+            padding: .1rem .45rem;
         }
 
         th:last-child, td:last-child {
@@ -106,6 +106,12 @@
             background-color: var(--stripe-bgcolor);
         }
 
+        table .subheading, table .subheading h3 {
+            text-align: center;
+            font-size: 1em;
+            white-space: nowrap;
+        }
+
         .small {
             font-size: .8rem;
         }
@@ -113,9 +119,6 @@
         .table-even {
             width: 50%;
             table-layout: fixed;
-        }
-
-        .table-even th, .tabel-even td {
         }
 
         .num, .month, .date {
@@ -178,8 +181,7 @@
             </tbody>
             <tfoot>
             <tr>
-                <th>{{.Week.Name}}</th>
-                <th class="num">{{ .Week.TotalSalesUSD.Total.Format }} USD</th>
+                <th colspan="2" class="num">{{ .Week.TotalSalesUSD.Total.Format }} USD</th>
             </tr>
             </tfoot>
         </table>
@@ -235,12 +237,12 @@
                 </thead>
                 <tbody>
                 {{ range .Months }}
-                    <tr {{ if .IsActiveMonth }}class="today"{{end}}>
+                    <tr {{ if .IsActiveMonth }}class="today"{{end}} id="month-{{.Date.Year}}-{{.Date.Month}}">
                         <td class="month">{{.Name}}</td>
                         <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
-                        <td class="num">{{ if .IsActiveMonth }}—{{ else }} {{- .AnnualRevenueUSD.Format }} USD{{ end }}</td>
+                        <td class="num">{{- .AnnualRevenueUSD.Format }} USD</td>
                         <td class="num"
                             title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly - {{len .ChurnedCustomers}} churned = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly ">{{ .ActiveCustomersTotal }}</td>
                         <td class="num num-percentage">
@@ -307,7 +309,8 @@
             {{ range .CurrencySales }}
                 <tr>
                     <td>{{.Currency}}</td>
-                    <td class="num" title="{{ len .Sales }} sale(s)">{{ if ne "USD" .Currency}}{{.TotalSales.Format}}{{end}}</td>
+                    <td class="num"
+                        title="{{ len .Sales }} sale(s)">{{ if ne "USD" .Currency}}{{.TotalSales.Format}}{{end}}</td>
                     <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalSalesUSD.Format}} USD</td>
                 </tr>
             {{ end }}
@@ -343,35 +346,8 @@
             <tbody class="small">
             {{ range .CustomerTypeSales }}
                 <tr>
-                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
                     <td>{{.Name}}</td>
-                </tr>
-            {{ end }}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="sections">
-    <div class="section section-customers section-wide">
-        <table class="small table-striped">
-            <thead>
-            <tr>
-                <th class="num"><h2>By Customer</h2></th>
-                <th class="num">ID</th>
-                <th>Name</th>
-                <th>Country</th>
-                <th>Type</th>
-            </tr>
-            </thead>
-            <tbody class="small">
-            {{ range .CustomerSales }}
-                <tr>
                     <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
-                    <td class="num">{{.Customer.ID}}</td>
-                    <td>{{.Customer.Name}}</td>
-                    <td>{{.Customer.Country}}</td>
-                    <td>{{.Customer.Type}}</td>
                 </tr>
             {{ end }}
             </tbody>
@@ -417,5 +393,81 @@
         {{ end }}
     {{ end }}
 {{ end }}
+
+<h2>Total Sales By Customer</h2>
+<div class="sections">
+    <div class="section section-customers section-wide">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th class="num">Total</th>
+                <th class="num">ID</th>
+                <th>Name</th>
+                <th>Country</th>
+                <th>Type</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ range .CustomerSales }}
+                <tr id="customer-{{.Customer.ID}}">
+                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
+                    <td class="num">{{.Customer.ID}}</td>
+                    <td>{{.Customer.Name}}</td>
+                    <td>{{.Customer.Country}}</td>
+                    <td>{{.Customer.Type}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h2>Sales</h2>
+<table class="section-wide table-striped small" id="sales-table">
+    <thead>
+    <tr>
+        <th><h3>Date</h3></th>
+        <th><h3>Customer</h3></th>
+        <th><h3>Amount</h3></th>
+        <th><h3>Amount USD</h3></th>
+        <th><h3>Subscription</h3></th>
+        <th><h3>Customer Type</h3></th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ $lastYear := -1 }}
+    {{ $lastMonth := -1 }}
+    {{ $lastDate := "" }}
+    {{ $sales := $report.Sales }}
+    {{ range $i,$e := $sales }}
+        {{ with (index $sales (addInt -1 (subInt (len $sales) $i))) }}
+            {{ if or (ne $lastYear .Date.Year) (ne $lastMonth .Date.Month) }}
+                <tr>
+                    <th colspan="6" class="subheading">
+                        <h3><a href="#month-{{.Date.Year}}-{{.Date.Month}}">{{.Date.Month}} {{.Date.Year}}</a></h3>
+                    </th>
+                    {{ $lastYear = .Date.Year }}
+                    {{ $lastMonth = .Date.Month }}
+                </tr>
+            {{end}}
+
+            <tr>
+                <td class="date">
+                    {{ $newDate := .Date.String }}
+                    {{ if ne $lastDate $newDate }}
+                        {{$lastDate = $newDate}}
+                        {{ $newDate }}
+                    {{ end }}
+                </td>
+                <td><a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a></td>
+                <td class="num">{{.Amount.Format}} {{.Currency}}</td>
+                <td class="num">{{.AmountUSD.Format}} USD</td>
+                <td>{{.Period}}</td>
+                <td>{{.Customer.Type}}</td>
+            </tr>
+        {{ end }}
+    {{ end }}
+    </tbody>
+</table>
 </body>
 </html>
