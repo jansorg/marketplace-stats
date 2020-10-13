@@ -80,47 +80,24 @@ func (t *Timeline) DrawSVG() template.HTML {
 		maxSale = math.Max(maxSale, usdValue)
 	}
 
-	downloadSeries := chart.TimeSeries{
-		Name: "Downloads",
-		Style: chart.Style{
-			StrokeColor: chart.ColorBlack,
-			FillColor:   chart.ColorBlue.WithAlpha(100),
-		},
-		XValues: xValues,
-		YValues: downloadValues,
-	}
-
 	salesSeries := chart.TimeSeries{
-		Name: "Sales USD",
 		Style: chart.Style{
-			StrokeColor: chart.ColorRed,
-			FillColor:   chart.ColorRed.WithAlpha(100),
+			StrokeColor: chart.ColorBlue,
+			FillColor:   chart.ColorBlue.WithAlpha(100),
+			ClassName:   "line-sales",
 		},
 		XValues: xValues,
 		YValues: salesUSDValues,
-		YAxis:   chart.YAxisSecondary,
 	}
 
 	graph := chart.Chart{
 		XAxis: chart.XAxis{
-			TickPosition: chart.TickPositionBetweenTicks,
+			Name: "Downloads",
 		},
 		YAxis: chart.YAxis{
-			Name: "Downloads",
-			Range: &chart.ContinuousRange{
-				Min: 0,
-				Max: maxDownload,
-			},
-		},
-		YAxisSecondary: chart.YAxis{
-			Name: "Sales USD",
-			Range: &chart.ContinuousRange{
-				Min: 0,
-				Max: maxSale,
-			},
+			Name: "Sales in USD",
 		},
 		Series: []chart.Series{
-			downloadSeries,
 			salesSeries,
 		},
 	}

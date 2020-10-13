@@ -107,7 +107,7 @@
             margin: 0 0 2rem 0;
         }
 
-        .table-striped tbody tr:nth-child(odd) {
+        .table-striped tbody tr:nth-child(even) {
             background-color: var(--stripe-bgcolor);
         }
 
@@ -167,11 +167,11 @@
 <h1>{{$report.PluginInfo.Name}}</h1>
 <h2 class="subtitle">{{.Date.Format "2006-01-02"}}</h2>
 
-<div class="sections">
-    <div class="section section-wide section-monthly">
-        {{ $report.Timeline.DrawSVG }}
-    </div>
-</div>
+{{/*<div class="sections">*/}}
+{{/*    <div class="section section-wide section-monthly">*/}}
+{{/*        {{ $report.Timeline.DrawSVG }}*/}}
+{{/*    </div>*/}}
+{{/*</div>*/}}
 
 <div class="sections">
     <div class="section section-currentweek section-small">
@@ -199,7 +199,7 @@
     </div>
 
     <div class="section section-yearly section-small">
-        <table class="small">
+        <table class="small table-striped">
             <thead>
             <tr>
                 <th><h2>Yearly Sales</h2></th>
@@ -383,7 +383,7 @@
                 </tbody>
             </table>
         {{ else }}
-            <table class="table-even small" id="churn-{{.Name}}">
+            <table class="table-even table-striped small" id="churn-{{.Name}}">
                 <thead>
                 <tr>
                     <th><h3>{{.Name}}</h3></th>
@@ -471,7 +471,7 @@
                     {{ end }}
                 </td>
                 <td><a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a></td>
-                <td class="num">{{.Amount.Format}} {{.Currency}}</td>
+                <td class="num">{{if ne "USD" .Currency}}{{.Amount.Format}} {{.Currency}}{{end}}</td>
                 <td class="num">{{.AmountUSD.Format}} USD</td>
                 <td>{{.Period}}</td>
                 <td>{{.Customer.Type}}</td>
