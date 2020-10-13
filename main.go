@@ -10,7 +10,6 @@ import (
 
 	"github.com/jansorg/marketplace-stats/marketplace"
 	"github.com/jansorg/marketplace-stats/report"
-	"github.com/jansorg/marketplace-stats/statistic"
 )
 
 func fatalOpt(err error) {
@@ -48,11 +47,6 @@ func main() {
 	pluginInfo, err = client.GetCurrentPluginInfo()
 	fatalOpt(err)
 
-	monthlyDownloadsUnique, err := client.DownloadsMonthly(false, "", "", "", "", "")
-	fatalOpt(err)
-	monthlyDownloadsTotal, err := client.DownloadsMonthly(true, "", "", "", "", "")
-	fatalOpt(err)
-
 	if *fetchParam {
 		sales, err = client.GetAllSalesInfo()
 		fatalOpt(err)
@@ -73,23 +67,10 @@ func main() {
 		fatalOpt(err)
 	}
 
-	// iterate years
-	var years []*statistic.Year
-	if len(sales) > 0 {
-		firstDate := sales[0].Date.AsDate()
-		lastDate := sales[len(sales)-1].Date.AsDate().AddDate(0, 1, 0)
-		year := firstDate
+	report, err := report.NewReport(pluginInfo, sales, client)
+	fatalOpt(err)
 
-		for !year.After(lastDate) {
-			stats := statistic.NewYear(year.Year())
-			stats.Update(sales, monthlyDownloadsTotal, monthlyDownloadsUnique)
-
-			years = append(years, stats)
-			year = year.AddDate(1, 0, 0)
-		}
-	}
-
-	html, err := report.NewReport(pluginInfo, sales, years).Generate()
+	html, err := report.Generate()
 	fatalOpt(err)
 
 	if *reportFileParam != "" && *reportFileParam != "-" {

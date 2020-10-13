@@ -29,16 +29,52 @@ type HTMLReport struct {
 	SubscriptionSales []marketplace.GroupedSales
 	CustomerTypeSales []marketplace.GroupedSales
 	CurrencySales     []*marketplace.CurrencySales
+
+	dailyDownloads []marketplace.DownloadsDaily
+	Timeline       *Timeline
 }
 
-func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, years []*statistic.Year) HTMLReport {
+func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, client *marketplace.Client) (*HTMLReport, error) {
+	monthlyDownloadsUnique, err := client.DownloadsMonthly(false, "", "", "", "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	monthlyDownloadsTotal, err := client.DownloadsMonthly(true, "", "", "", "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	dailyDownloadsTotal, err := client.DownloadsDaily(false, "", "", "", "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	// iterate years
+	var years []*statistic.Year
+	if len(allSales) > 0 {
+		firstDate := allSales[0].Date.AsDate()
+		lastDate := allSales[len(allSales)-1].Date.AsDate().AddDate(0, 1, 0)
+		year := firstDate
+
+		for !year.After(lastDate) {
+			stats := statistic.NewYear(year.Year())
+			stats.Update(allSales, monthlyDownloadsTotal, monthlyDownloadsUnique)
+
+			years = append(years, stats)
+			year = year.AddDate(1, 0, 0)
+		}
+	}
+
 	customers := allSales.Customers()
 	week := statistic.NewWeekToday(marketplace.ServerTimeZone)
 	week.Update(allSales)
 
-	return HTMLReport{
+	return &HTMLReport{
+		dailyDownloads:           dailyDownloadsTotal,
 		Date:                     time.Now(),
 		PluginInfo:               pluginInfo,
+		Timeline:                 NewTimeline(allSales, dailyDownloadsTotal),
 		Sales:                    allSales,
 		Customers:                customers.SortByID(),
 		CustomerSales:            allSales.CustomerSales(),
@@ -52,7 +88,7 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, ye
 		FreeSubscriptionCount:    len(allSales.ByFreeSubscription().Customers()),
 		Week:                     week,
 		Years:                    years,
-	}
+	}, nil
 }
 
 func (r HTMLReport) Generate() (string, error) {

@@ -56,6 +56,29 @@ func (c *Client) DownloadsMonthly(uniqueDownloads bool, channel, build, product,
 	return months, nil
 }
 
+func (c *Client) DownloadsDaily(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadsDaily, error) {
+	resp, err := c.Downloads("day", uniqueDownloads, channel, build, product, country, productCommonCode)
+	if err != nil {
+		return nil, err
+	}
+
+	var days []DownloadsDaily
+	for _, d := range resp.Data.Serie {
+		parsedDate, err := time.ParseInLocation("2006-01-02", d.Name, ServerTimeZone)
+		if err != nil {
+			return nil, err
+		}
+
+		days = append(days, DownloadsDaily{
+			Year:      parsedDate.Year(),
+			Month:     parsedDate.Month(),
+			Day:       parsedDate.Day(),
+			Downloads: d.Value,
+		})
+	}
+	return days, nil
+}
+
 func (c *Client) Downloads(period string, uniqueDownloads bool, channel, build, product, country, productCommonCode string) (DownloadResponse, error) {
 	params := map[string]string{
 		"plugin": c.pluginID,

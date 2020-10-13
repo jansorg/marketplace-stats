@@ -32,3 +32,12 @@ func (d YearMonthDay) AsDate() time.Time {
 func (d YearMonthDay) IsAfter(o YearMonthDay) bool {
 	return d.AsDate().After(o.AsDate())
 }
+
+func (d YearMonthDay) Equals(o YearMonthDay) bool {
+	return d.Year() == o.Year() && d.Month() == o.Month() && d.Day() == o.Day()
+}
+
+func (d YearMonthDay) NextDay() YearMonthDay {
+	y, m, day := d.AsDate().AddDate(0, 0, 1).Date()
+	return NewYearMonthDay(y, int(m), day)
+}

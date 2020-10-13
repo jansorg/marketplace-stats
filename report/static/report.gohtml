@@ -15,7 +15,7 @@
         }
 
         /* reset */
-        html, body, h1, h2, h3, p, div, table, tr, th, td {
+        html, body, h1, h2, h3, p, div, table, tr, th, td, svg, img {
             margin: 0;
             padding: 0;
             line-height: 1.4;
@@ -56,6 +56,11 @@
         a, a:visited {
             text-decoration: none;
             color: var(--link-color);
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
         }
 
         table {
@@ -161,6 +166,12 @@
 <body>
 <h1>{{$report.PluginInfo.Name}}</h1>
 <h2 class="subtitle">{{.Date.Format "2006-01-02"}}</h2>
+
+<div class="sections">
+    <div class="section section-wide section-monthly">
+        {{ $report.Timeline.DrawSVG }}
+    </div>
+</div>
 
 <div class="sections">
     <div class="section section-currentweek section-small">
