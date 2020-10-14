@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/jansorg/go-randomdata v1.2.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/tdewolff/canvas v0.0.0-20201001125124-22ab9a5a4f3e

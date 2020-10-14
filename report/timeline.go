@@ -27,7 +27,7 @@ type Timeline struct {
 	Items []TimelineItem
 }
 
-func NewMonthlyTimeline(sales marketplace.Sales, downloads []marketplace.DownloadMonthly, downloadsUnique []marketplace.DownloadMonthly) *Timeline {
+func NewMonthlyTimeline(sales marketplace.Sales, downloads []marketplace.DownloadMonthly) *Timeline {
 	var firstMonth, lastMonth marketplace.YearMonth
 	if len(sales) > 0 {
 		firstMonth = sales[0].Date.AsYearMonth()
@@ -57,7 +57,7 @@ func NewMonthlyTimeline(sales marketplace.Sales, downloads []marketplace.Downloa
 		}
 
 		var downloadUniqueCount int
-		for _, d := range downloadsUnique {
+		for _, d := range downloads {
 			if d.Date().Equals(month) {
 				downloadUniqueCount = d.Downloads
 				break
@@ -79,7 +79,60 @@ func NewMonthlyTimeline(sales marketplace.Sales, downloads []marketplace.Downloa
 	}
 }
 
-func NewDailyTimeline(sales marketplace.Sales, daily []marketplace.DownloadDaily) *Timeline {
+func NewWeeklyTimeline(sales marketplace.Sales, downloads []marketplace.DownloadAndDate) *Timeline {
+	var firstMonth, lastMonth marketplace.YearMonthDay
+	if len(sales) > 0 {
+		firstMonth = sales[0].Date
+		lastMonth = sales[len(sales)-1].Date
+	}
+
+	if len(downloads) > 0 {
+		if first := downloads[0].Date(); firstMonth.IsAfter(first) {
+			firstMonth = first
+		}
+
+		if last := downloads[len(downloads)-1].Date(); last.IsAfter(lastMonth) {
+			lastMonth = last
+		}
+	}
+
+	week := firstMonth
+
+	var months []TimelineItem
+	for !week.IsAfter(lastMonth) {
+		var downloadCount int
+		for _, d := range downloads {
+			if d.Date().Equals(week) {
+				downloadCount = d.Downloads
+				break
+			}
+		}
+
+		var downloadUniqueCount int
+		for _, d := range downloads {
+			if d.Date().Equals(week) {
+				downloadUniqueCount = d.Downloads
+				break
+			}
+		}
+
+		nextWeek := week.AddDays(7)
+		months = append(months, TimelineItem{
+			Date:            week,
+			Downloads:       downloadCount,
+			DownloadsUnique: downloadUniqueCount,
+			Sales:           sales.ByDateRange(week, nextWeek),
+		})
+
+		week = nextWeek
+	}
+
+	return &Timeline{
+		Items: months,
+	}
+}
+
+func NewDailyTimeline(sales marketplace.Sales, daily []marketplace.DownloadAndDate) *Timeline {
 	var firstDay, lastDay marketplace.YearMonthDay
 	if len(sales) > 0 {
 		firstDay = sales[0].Date
@@ -132,10 +185,6 @@ func (t *Timeline) DrawSVG() template.HTML {
 	var maxSale float64
 	for _, d := range t.Items {
 		xValues = append(xValues, d.Date.AsDate())
-		xAxisTicks = append(xAxisTicks, chart.Tick{
-			Value: float64(d.Date.AsDate().UnixNano()),
-			Label: d.Date.AsDate().Format("2006-01"),
-		})
 
 		downloadValues = append(downloadValues, float64(d.Downloads))
 		downloadUniqueValues = append(downloadUniqueValues, float64(d.DownloadsUnique))
@@ -156,16 +205,6 @@ func (t *Timeline) DrawSVG() template.HTML {
 		YValues: salesUSDValues,
 	}
 
-	downloadsSeries := chart.TimeSeries{
-		Style: chart.Style{
-			StrokeColor: chart.ColorRed,
-			ClassName:   "line-download",
-		},
-		XValues: xValues,
-		YValues: downloadValues,
-		YAxis:   chart.YAxisSecondary,
-	}
-
 	downloadsUniqueSeries := chart.TimeSeries{
 		Style: chart.Style{
 			StrokeColor: chart.ColorBlack,
@@ -178,19 +217,19 @@ func (t *Timeline) DrawSVG() template.HTML {
 
 	graph := chart.Chart{
 		XAxis: chart.XAxis{
-			//Name: "Downloads",
 			TickPosition: chart.TickPositionUnderTick,
 			Ticks:        xAxisTicks,
 		},
 		YAxis: chart.YAxis{
-			//Name: "Sales in USD",
+			ValueFormatter: func(v interface{}) string {
+				return chart.FloatValueFormatterWithFormat(v, "%.0f USD")
+			},
 		},
 		YAxisSecondary: chart.YAxis{
-			//Name: "Downloads",
+			ValueFormatter: chart.IntValueFormatter,
 		},
 		Series: []chart.Series{
 			salesSeries,
-			downloadsSeries,
 			downloadsUniqueSeries,
 		},
 	}

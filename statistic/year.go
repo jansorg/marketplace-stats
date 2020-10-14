@@ -29,7 +29,14 @@ func (y *Year) Name() string {
 	return fmt.Sprintf("%d", y.Year)
 }
 
-func (y *Year) Update(sales marketplace.Sales, downloadsTotal, downloadsUnique []marketplace.DownloadMonthly) {
+func (y *Year) LastMonth() *Month {
+	if len(y.Months) == 0 {
+		return nil
+	}
+	return y.Months[len(y.Months)-1]
+}
+
+func (y *Year) Update(previousYear *Year, sales marketplace.Sales, downloadsTotal, downloadsUnique []marketplace.DownloadMonthly) {
 	yearlySales := sales.ByYear(y.Year)
 
 	y.TotalCustomers = len(yearlySales.CustomersMap())
@@ -41,18 +48,23 @@ func (y *Year) Update(sales marketplace.Sales, downloadsTotal, downloadsUnique [
 	// iterate months
 	if len(sales) > 0 {
 		currentMonth := time.Date(y.Year, time.January, 1, 0, 0, 0, 0, marketplace.ServerTimeZone)
+		lastMonth := time.Date(y.Year, time.December, 30, 23, 59, 59, 999, marketplace.ServerTimeZone)
+
 		if len(sales) > 0 && sales[0].Date.AsDate().After(currentMonth) {
 			currentMonth = time.Date(sales[0].Date.Year(), sales[0].Date.Month(), 1, 0, 0, 0, 0, marketplace.ServerTimeZone)
 		}
 
 		now := time.Now().In(marketplace.ServerTimeZone)
-		end := currentMonth.AddDate(1, 0, 0)
-		if end.After(now) {
-			end = now.AddDate(0, 1, -now.Day())
+		if lastMonth.After(now) {
+			lastMonth = now.AddDate(0, 1, -now.Day())
 		}
 
 		var prevMonthData *Month
-		for !currentMonth.After(end) {
+		if previousYear != nil {
+			prevMonthData = previousYear.LastMonth()
+		}
+
+		for !currentMonth.After(lastMonth) {
 			month := NewMonthForDate(currentMonth)
 			month.Update(sales, prevMonthData, downloadsTotal, downloadsUnique)
 

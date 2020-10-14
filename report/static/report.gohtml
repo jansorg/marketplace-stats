@@ -160,6 +160,11 @@
         .section-wide, .section-wide table {
             width: 100%;
         }
+
+        .section-chart {
+            width: 80%;
+            margin: 0 auto;
+        }
     </style>
 </head>
 
@@ -168,7 +173,7 @@
 <h2 class="subtitle">{{.Date.Format "2006-01-02"}}</h2>
 
 <div class="sections">
-    <div class="section section-wide section-monthly">
+    <div class="section section-chart section-centered">
         {{ $report.Timeline.DrawSVG }}
     </div>
 </div>
@@ -299,7 +304,11 @@
             </tr>
             </thead>
             <tbody class="small">
-            {{ range (slice .CountrySales 0 10) }}
+            {{ $max := 10 }}
+            {{ if lt (len .CountrySales) 10 }}
+                {{ $max = addInt -1 (len .CountrySales) }}
+            {{ end }}
+            {{ range (slice .CountrySales 0 $max) }}
                 <tr>
                     <td>{{.Country}}</td>
                     <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>

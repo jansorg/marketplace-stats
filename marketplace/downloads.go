@@ -2,14 +2,15 @@ package marketplace
 
 import "time"
 
-type DownloadDaily struct {
+type DownloadAndDate struct {
+	Downloads int
+
 	Year      int
 	Month     time.Month
 	Day       int
-	Downloads int
 }
 
-func (d DownloadDaily) Date() YearMonthDay {
+func (d DownloadAndDate) Date() YearMonthDay {
 	return NewYearMonthDay(d.Year, int(d.Month), d.Day)
 }
 

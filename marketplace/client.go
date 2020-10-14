@@ -8,15 +8,28 @@ import (
 	"time"
 )
 
-type Client struct {
+type Client interface {
+	GetCurrentPluginInfo() (PluginInfo, error)
+	GetPluginInfo(id string) (PluginInfo, error)
+	DownloadsMonthly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadMonthly, error)
+	DownloadsWeekly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadAndDate, error)
+	DownloadsDaily(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadAndDate, error)
+	Downloads(period string, uniqueDownloads bool, channel, build, product, country, productCommonCode string) (DownloadResponse, error)
+
+	GetAllSalesInfo() (Sales, error)
+	GetSalesInfo(beginDate, endDate YearMonthDay) (Sales, error)
+	GetJSON(path string, params map[string]string, target interface{}) error
+}
+
+type client struct {
 	pluginID string
 	token    string
 	client   http.Client
 	hostname string
 }
 
-func NewClient(pluginID, token string) *Client {
-	return &Client{
+func NewClient(pluginID, token string) Client {
+	return &client{
 		token:    token,
 		pluginID: pluginID,
 		hostname: "plugins.jetbrains.com",
@@ -24,17 +37,17 @@ func NewClient(pluginID, token string) *Client {
 	}
 }
 
-func (c *Client) GetCurrentPluginInfo() (PluginInfo, error) {
+func (c *client) GetCurrentPluginInfo() (PluginInfo, error) {
 	return c.GetPluginInfo(c.pluginID)
 }
 
-func (c *Client) GetPluginInfo(id string) (PluginInfo, error) {
+func (c *client) GetPluginInfo(id string) (PluginInfo, error) {
 	var plugin PluginInfo
 	err := c.GetJSON(fmt.Sprintf("/api/plugins/%s", id), nil, &plugin)
 	return plugin, err
 }
 
-func (c *Client) DownloadsMonthly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadMonthly, error) {
+func (c *client) DownloadsMonthly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadMonthly, error) {
 	resp, err := c.Downloads("month", uniqueDownloads, channel, build, product, country, productCommonCode)
 	if err != nil {
 		return nil, err
@@ -56,20 +69,20 @@ func (c *Client) DownloadsMonthly(uniqueDownloads bool, channel, build, product,
 	return months, nil
 }
 
-func (c *Client) DownloadsDaily(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadDaily, error) {
-	resp, err := c.Downloads("day", uniqueDownloads, channel, build, product, country, productCommonCode)
+func (c *client) DownloadsWeekly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadAndDate, error) {
+	resp, err := c.Downloads("week", uniqueDownloads, channel, build, product, country, productCommonCode)
 	if err != nil {
 		return nil, err
 	}
 
-	var days []DownloadDaily
+	var days []DownloadAndDate
 	for _, d := range resp.Data.Serie {
 		parsedDate, err := time.ParseInLocation("2006-01-02", d.Name, ServerTimeZone)
 		if err != nil {
 			return nil, err
 		}
 
-		days = append(days, DownloadDaily{
+		days = append(days, DownloadAndDate{
 			Year:      parsedDate.Year(),
 			Month:     parsedDate.Month(),
 			Day:       parsedDate.Day(),
@@ -79,7 +92,30 @@ func (c *Client) DownloadsDaily(uniqueDownloads bool, channel, build, product, c
 	return days, nil
 }
 
-func (c *Client) Downloads(period string, uniqueDownloads bool, channel, build, product, country, productCommonCode string) (DownloadResponse, error) {
+func (c *client) DownloadsDaily(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadAndDate, error) {
+	resp, err := c.Downloads("day", uniqueDownloads, channel, build, product, country, productCommonCode)
+	if err != nil {
+		return nil, err
+	}
+
+	var days []DownloadAndDate
+	for _, d := range resp.Data.Serie {
+		parsedDate, err := time.ParseInLocation("2006-01-02", d.Name, ServerTimeZone)
+		if err != nil {
+			return nil, err
+		}
+
+		days = append(days, DownloadAndDate{
+			Year:      parsedDate.Year(),
+			Month:     parsedDate.Month(),
+			Day:       parsedDate.Day(),
+			Downloads: d.Value,
+		})
+	}
+	return days, nil
+}
+
+func (c *client) Downloads(period string, uniqueDownloads bool, channel, build, product, country, productCommonCode string) (DownloadResponse, error) {
 	params := map[string]string{
 		"plugin": c.pluginID,
 	}
@@ -110,12 +146,12 @@ func (c *Client) Downloads(period string, uniqueDownloads bool, channel, build, 
 	return resp, err
 }
 
-func (c *Client) GetAllSalesInfo() ([]Sale, error) {
+func (c *client) GetAllSalesInfo() (Sales, error) {
 	y, m, d := time.Now().Date()
 	return c.GetSalesInfo(NewYearMonthDay(2019, 06, 25), NewYearMonthDay(y, int(m), d))
 }
 
-func (c *Client) GetSalesInfo(beginDate, endDate YearMonthDay) ([]Sale, error) {
+func (c *client) GetSalesInfo(beginDate, endDate YearMonthDay) (Sales, error) {
 	params := map[string]string{
 		"beginDate": beginDate.String(),
 		"endDate":   endDate.String(),
@@ -126,7 +162,7 @@ func (c *Client) GetSalesInfo(beginDate, endDate YearMonthDay) ([]Sale, error) {
 	return sales, err
 }
 
-func (c *Client) GetJSON(path string, params map[string]string, target interface{}) error {
+func (c *client) GetJSON(path string, params map[string]string, target interface{}) error {
 	u := url.URL{
 		Scheme: "https",
 		Host:   c.hostname,

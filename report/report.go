@@ -33,7 +33,7 @@ type HTMLReport struct {
 	Timeline *Timeline
 }
 
-func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, client *marketplace.Client) (*HTMLReport, error) {
+func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, client marketplace.Client) (*HTMLReport, error) {
 	monthlyDownloadsUnique, err := client.DownloadsMonthly(true, "", "", "", "", "")
 	if err != nil {
 		return nil, err
@@ -44,11 +44,6 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, cl
 		return nil, err
 	}
 
-	//dailyDownloadsTotal, err := client.DownloadsDaily(false, "", "", "", "", "")
-	//if err != nil {
-	//	return nil, err
-	//}
-
 	// iterate years
 	var years []*statistic.Year
 	if len(allSales) > 0 {
@@ -56,12 +51,14 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, cl
 		lastDate := allSales[len(allSales)-1].Date.AsDate().AddDate(0, 1, 0)
 		year := firstDate
 
+		var previousYearStats *statistic.Year
 		for !year.After(lastDate) {
-			stats := statistic.NewYear(year.Year())
-			stats.Update(allSales, monthlyDownloadsTotal, monthlyDownloadsUnique)
+			yearStats := statistic.NewYear(year.Year())
+			yearStats.Update(previousYearStats, allSales, monthlyDownloadsTotal, monthlyDownloadsUnique)
 
-			years = append(years, stats)
+			years = append(years, yearStats)
 			year = year.AddDate(1, 0, 0)
+			previousYearStats = yearStats
 		}
 	}
 
@@ -72,7 +69,7 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, cl
 	return &HTMLReport{
 		Date:                     time.Now(),
 		PluginInfo:               pluginInfo,
-		Timeline:                 NewMonthlyTimeline(allSales, monthlyDownloadsTotal, monthlyDownloadsUnique),
+		Timeline:                 NewMonthlyTimeline(allSales, monthlyDownloadsUnique),
 		Sales:                    allSales,
 		Week:                     week,
 		Years:                    years,

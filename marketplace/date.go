@@ -45,3 +45,8 @@ func (d YearMonthDay) NextDay() YearMonthDay {
 	y, m, day := d.AsDate().AddDate(0, 0, 1).Date()
 	return NewYearMonthDay(y, int(m), day)
 }
+
+func (d YearMonthDay) AddDays(days int) YearMonthDay {
+	y, m, day := d.AsDate().AddDate(0, 0, days).Date()
+	return NewYearMonthDay(y, int(m), day)
+}

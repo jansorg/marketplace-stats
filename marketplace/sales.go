@@ -67,6 +67,11 @@ func (s Sales) ByWeek(year int, isoWeek int) Sales {
 	})
 }
 
+// ByDateRange returns a new Sales slice, which contains all items bought in the given date range (inclusive)
+func (s Sales) ByDateRange(begin, end YearMonthDay) Sales {
+	return s.After(begin.AsDate()).Before(end.AsDate().AddDate(0, 0, 1))
+}
+
 func (s Sales) ByYear(year int) Sales {
 	return s.FilterBy(func(sale Sale) bool {
 		return sale.Date.Year() == year
@@ -304,4 +309,12 @@ func (s Sales) GroupByCurrency() []*CurrencySales {
 		return a > b
 	})
 	return result
+}
+
+func (s Sales) SortedByDate() Sales {
+	copy := s
+	sort.Slice(copy, func(i, j int) bool {
+		return !copy[i].Date.IsAfter(copy[j].Date)
+	})
+	return copy
 }
