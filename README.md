@@ -3,12 +3,16 @@ This is a tool to create reports for paid plugins on the JetBrains marketplace.
 
 It creates a report for one plugin at a time.
 
+# Example
+[Complete HTML of this random report](./random-report.html)
+![First part of a random report](./random-report.png)
+
 # Building
 ```bash
 go get github.com/jansorg/marketplace-stats
 ```
 
-# Using
+# Command Line Usage
 ```plain
 Usage of ./marketplace-stats:
   -cache-file string
@@ -26,9 +30,11 @@ Usage of ./marketplace-stats:
 ```
 
 # Generating Reports
+Reports are self-contained HTML files. The file uses an optional font from Google Fonts, but everything else is in the HTML file.
+
 To generate a report, you need the following:
-- The numeric ID of your plugin, this is the number in the marketplace URL. For example, the ID of BashSupport Pro is 13841, because the URL is https://plugins.jetbrains.com/plugin/13841-bashsupport-pro.
-- An API token. You can generate a token at https://plugins.jetbrains.com/author/me/tokens. `marketplace-stats` can read the token from the command line or from a file.
+- **The numeric ID of your plugin**<br>This is the number in the marketplace URL. For example, the ID of BashSupport Pro is 13841, because the URL is https://plugins.jetbrains.com/plugin/13841-bashsupport-pro.
+- **An API token**<br>You can generate a token at https://plugins.jetbrains.com/author/me/tokens. `marketplace-stats` can read the token from the command line or from a file.
 
 The following command generates `report.html` for plugin 123456. The token is retrieved from the given file.
  
@@ -37,8 +43,13 @@ The following command generates `report.html` for plugin 123456. The token is re
 marketplace-stats -plugin-id 123456 -token-file token.txt -out report.html 
 ```
 
+# Go Client for the JetBrains Marketplace
+Package `marketplace` contains a work-in-progress client for the REST API of the JetBrains marketplace. See [`main.go`](./main.go) how to use it.
+
 # Contributing
-This tool is made for my own plugins and requirements. I'm not planning to spend time to adjust it to the requirements of others. I'll gladly accept pull requests by others if these don't break existing functionality.
+This tool is made for my own plugins and requirements. I'm not planning to spend time to adjust it to the requirements of others. 
+
+I'll gladly accept pull requests, if they don't break existing functionality.
 
 # License
-This software is licensed under the GPL, version 3.
+This software is licensed under Apache License, version 2.0.
