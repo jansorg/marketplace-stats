@@ -34,20 +34,20 @@ func (c *Client) GetPluginInfo(id string) (PluginInfo, error) {
 	return plugin, err
 }
 
-func (c *Client) DownloadsMonthly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadsMonthly, error) {
+func (c *Client) DownloadsMonthly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadMonthly, error) {
 	resp, err := c.Downloads("month", uniqueDownloads, channel, build, product, country, productCommonCode)
 	if err != nil {
 		return nil, err
 	}
 
-	var months []DownloadsMonthly
+	var months []DownloadMonthly
 	for _, d := range resp.Data.Serie {
 		parsedDate, err := time.ParseInLocation("2006-01-02", d.Name, ServerTimeZone)
 		if err != nil {
 			return nil, err
 		}
 
-		months = append(months, DownloadsMonthly{
+		months = append(months, DownloadMonthly{
 			Year:      parsedDate.Year(),
 			Month:     parsedDate.Month(),
 			Downloads: d.Value,
@@ -56,20 +56,20 @@ func (c *Client) DownloadsMonthly(uniqueDownloads bool, channel, build, product,
 	return months, nil
 }
 
-func (c *Client) DownloadsDaily(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadsDaily, error) {
+func (c *Client) DownloadsDaily(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadDaily, error) {
 	resp, err := c.Downloads("day", uniqueDownloads, channel, build, product, country, productCommonCode)
 	if err != nil {
 		return nil, err
 	}
 
-	var days []DownloadsDaily
+	var days []DownloadDaily
 	for _, d := range resp.Data.Serie {
 		parsedDate, err := time.ParseInLocation("2006-01-02", d.Name, ServerTimeZone)
 		if err != nil {
 			return nil, err
 		}
 
-		days = append(days, DownloadsDaily{
+		days = append(days, DownloadDaily{
 			Year:      parsedDate.Year(),
 			Month:     parsedDate.Month(),
 			Day:       parsedDate.Day(),

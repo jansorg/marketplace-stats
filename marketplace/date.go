@@ -21,6 +21,10 @@ func (d YearMonthDay) Month() time.Month {
 	return time.Month(d[1])
 }
 
+func (d YearMonthDay) AsYearMonth() YearMonth {
+	return NewYearMonth(d.Year(), d.Month())
+}
+
 func (d YearMonthDay) Day() int {
 	return d[2]
 }

@@ -167,11 +167,11 @@
 <h1>{{$report.PluginInfo.Name}}</h1>
 <h2 class="subtitle">{{.Date.Format "2006-01-02"}}</h2>
 
-{{/*<div class="sections">*/}}
-{{/*    <div class="section section-wide section-monthly">*/}}
-{{/*        {{ $report.Timeline.DrawSVG }}*/}}
-{{/*    </div>*/}}
-{{/*</div>*/}}
+<div class="sections">
+    <div class="section section-wide section-monthly">
+        {{ $report.Timeline.DrawSVG }}
+    </div>
+</div>
 
 <div class="sections">
     <div class="section section-currentweek section-small">

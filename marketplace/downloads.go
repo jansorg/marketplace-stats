@@ -2,21 +2,25 @@ package marketplace
 
 import "time"
 
-type DownloadsDaily struct {
+type DownloadDaily struct {
 	Year      int
 	Month     time.Month
 	Day       int
 	Downloads int
 }
 
-func (d DownloadsDaily) Date() YearMonthDay {
+func (d DownloadDaily) Date() YearMonthDay {
 	return NewYearMonthDay(d.Year, int(d.Month), d.Day)
 }
 
-type DownloadsMonthly struct {
+type DownloadMonthly struct {
 	Year      int
 	Month     time.Month
 	Downloads int
+}
+
+func (d DownloadMonthly) Date() YearMonth {
+	return NewYearMonth(d.Year, d.Month)
 }
 
 type Filter struct {

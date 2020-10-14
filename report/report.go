@@ -30,25 +30,24 @@ type HTMLReport struct {
 	CustomerTypeSales []marketplace.GroupedSales
 	CurrencySales     []*marketplace.CurrencySales
 
-	dailyDownloads []marketplace.DownloadsDaily
-	Timeline       *Timeline
+	Timeline *Timeline
 }
 
 func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, client *marketplace.Client) (*HTMLReport, error) {
-	monthlyDownloadsUnique, err := client.DownloadsMonthly(false, "", "", "", "", "")
+	monthlyDownloadsUnique, err := client.DownloadsMonthly(true, "", "", "", "", "")
 	if err != nil {
 		return nil, err
 	}
 
-	monthlyDownloadsTotal, err := client.DownloadsMonthly(true, "", "", "", "", "")
+	monthlyDownloadsTotal, err := client.DownloadsMonthly(false, "", "", "", "", "")
 	if err != nil {
 		return nil, err
 	}
 
-	dailyDownloadsTotal, err := client.DownloadsDaily(false, "", "", "", "", "")
-	if err != nil {
-		return nil, err
-	}
+	//dailyDownloadsTotal, err := client.DownloadsDaily(false, "", "", "", "", "")
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	// iterate years
 	var years []*statistic.Year
@@ -71,11 +70,12 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, cl
 	week.Update(allSales)
 
 	return &HTMLReport{
-		dailyDownloads:           dailyDownloadsTotal,
 		Date:                     time.Now(),
 		PluginInfo:               pluginInfo,
-		Timeline:                 NewTimeline(allSales, dailyDownloadsTotal),
+		Timeline:                 NewMonthlyTimeline(allSales, monthlyDownloadsTotal, monthlyDownloadsUnique),
 		Sales:                    allSales,
+		Week:                     week,
+		Years:                    years,
 		Customers:                customers.SortByID(),
 		CustomerSales:            allSales.CustomerSales(),
 		CountrySales:             allSales.CountrySales(),
@@ -86,8 +86,6 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, cl
 		AnnualSubscriptionCount:  len(allSales.ByAnnualSubscription().Customers()),
 		MonthlySubscriptionCount: len(allSales.ByMonthlySubscription().Customers()),
 		FreeSubscriptionCount:    len(allSales.ByFreeSubscription().Customers()),
-		Week:                     week,
-		Years:                    years,
 	}, nil
 }
 

@@ -29,7 +29,7 @@ func (y *Year) Name() string {
 	return fmt.Sprintf("%d", y.Year)
 }
 
-func (y *Year) Update(sales marketplace.Sales, downloadsTotal, downloadsUnique []marketplace.DownloadsMonthly) {
+func (y *Year) Update(sales marketplace.Sales, downloadsTotal, downloadsUnique []marketplace.DownloadMonthly) {
 	yearlySales := sales.ByYear(y.Year)
 
 	y.TotalCustomers = len(yearlySales.CustomersMap())

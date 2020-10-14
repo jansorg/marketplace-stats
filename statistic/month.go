@@ -63,7 +63,7 @@ func (m *Month) DownloadsTotalRatio(downloads int) marketplace.Amount {
 	return m.TotalSalesUSD.Total / marketplace.Amount(downloads)
 }
 
-func findMonth(downloads []marketplace.DownloadsMonthly, yearMonth time.Time) int {
+func findMonth(downloads []marketplace.DownloadMonthly, yearMonth time.Time) int {
 	y, m, _ := yearMonth.Date()
 	for _, d := range downloads {
 		if d.Year == y && d.Month == m {
@@ -74,7 +74,7 @@ func findMonth(downloads []marketplace.DownloadsMonthly, yearMonth time.Time) in
 }
 
 // Update the current month's data from the complete collection of sales
-func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downloadsTotal []marketplace.DownloadsMonthly, downloadsUnique []marketplace.DownloadsMonthly) {
+func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downloadsTotal []marketplace.DownloadMonthly, downloadsUnique []marketplace.DownloadMonthly) {
 	m.PrevMonth = previousMonthData
 
 	// find download counts
