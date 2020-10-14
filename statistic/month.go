@@ -138,7 +138,6 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 			y, m, d := time.Now().In(marketplace.ServerTimeZone).Date()
 			lastDay := time.Date(y, m, 1, 0, 0, 0, 0, marketplace.ServerTimeZone).AddDate(0, 1, -1).Day()
 			monthSalesFactor = float64(lastDay) / float64(d)
-			//fmt.Println(monthSalesFactor)
 		}
 
 		for _, sale := range currentMonthSales {
