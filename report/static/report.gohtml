@@ -379,6 +379,28 @@
             </tbody>
         </table>
     </div>
+
+    <div class="section section-small section-topids">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th colspan="2"><h2>Oldest Customers</h2></th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ $topCustomers := .Customers.SortByID }}
+            {{ if gt (len $topCustomers) 5 }}
+                {{ $topCustomers = slice $topCustomers 0 5 }}
+            {{ end }}
+            {{ range $topCustomers }}
+                <tr>
+                    <td>{{.ID}}</td>
+                    <td><a href="#customer-{{.ID}}">{{.Name}}</a></td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <h2>Monthly Churned Users</h2>

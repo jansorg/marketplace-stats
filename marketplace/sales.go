@@ -146,8 +146,8 @@ func (s Sales) CustomersMap() map[CustomerID]Customer {
 
 func (s Sales) Customers() Customers {
 	var result Customers
-	for _, s := range s {
-		result = append(result, s.Customer)
+	for _, c := range s.CustomersMap() {
+		result = append(result, c)
 	}
 	return result
 }
