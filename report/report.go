@@ -3,6 +3,7 @@ package report
 //go:generate esc -o static.go -pkg report static
 
 import (
+	"fmt"
 	"html/template"
 	"strings"
 	"time"
@@ -86,13 +87,45 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, cl
 	}, nil
 }
 
+func toFloat(v interface{}) (float64, error) {
+	switch n := v.(type) {
+	case int:
+		return float64(n), nil
+	case int32:
+		return float64(n), nil
+	case int64:
+		return float64(n), nil
+	case float32:
+		return float64(n), nil
+	case float64:
+		return n, nil
+	case marketplace.Amount:
+		return float64(n), nil
+	}
+	return 0.0, fmt.Errorf("unknown type: %T", v)
+}
+
 func (r HTMLReport) Generate() (string, error) {
+
 	funcMap := template.FuncMap{
 		"addInt": func(a, b int) int {
 			return a + b
 		},
 		"subInt": func(a, b int) int {
 			return a - b
+		},
+		"percentage": func(a, b interface{}) (string, error) {
+			f1, err := toFloat(a)
+			if err != nil {
+				return "", err
+			}
+
+			f2, err := toFloat(b)
+			if err != nil {
+				return "", err
+			}
+
+			return fmt.Sprintf("%.2f%%", f1/f2*100.0), nil
 		},
 	}
 

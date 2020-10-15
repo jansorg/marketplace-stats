@@ -8,7 +8,7 @@ It creates a report for one plugin at a time.
 
 [PDF of this random report](./random-report.pdf)
 
-![First part of a random report](./random-report.png)
+![First part of a random report](./random-report.jpg)
 
 # Building
 ```bash

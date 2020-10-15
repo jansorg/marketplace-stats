@@ -312,9 +312,9 @@ func (s Sales) GroupByCurrency() []*CurrencySales {
 }
 
 func (s Sales) SortedByDate() Sales {
-	copy := s
-	sort.Slice(copy, func(i, j int) bool {
-		return !copy[i].Date.IsAfter(copy[j].Date)
+	c := s
+	sort.Slice(c, func(i, j int) bool {
+		return !c[i].Date.IsAfter(c[j].Date)
 	})
-	return copy
+	return c
 }
