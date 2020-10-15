@@ -5,6 +5,9 @@ It creates a report for one plugin at a time.
 
 # Example
 [Complete HTML of this random report](./random-report.html)
+
+[PDF of this random report](./random-report.pdf)
+
 ![First part of a random report](./random-report.png)
 
 # Building
