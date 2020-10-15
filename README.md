@@ -3,6 +3,8 @@ This is a tool to create reports for paid plugins on the JetBrains marketplace.
 
 It creates a report for one plugin at a time.
 
+Pre—built binaries are available on the [releases page](https://github.com/jansorg/marketplace-stats/releases).
+
 # Example
 [Complete HTML of this random report](./random-report.html)
 
