@@ -50,6 +50,9 @@ The following command generates `report.html` for plugin 123456. The token is re
 marketplace-stats -plugin-id 123456 -token-file token.txt -out report.html 
 ```
 
+## Tips & Tricks
+- There's a tooltip on the numbers of the `Customers` column in the table of monthly summaries. The tooltip tells more about the changes in active customers in a month.  
+
 # Go Client for the JetBrains Marketplace
 Package `marketplace` contains a work-in-progress client for the REST API of the JetBrains marketplace. See [`main.go`](./main.go) how to use it.
 
