@@ -16,7 +16,7 @@ Pre—built binaries are available on the [releases page](https://github.com/jan
 First, make sure you have installed Golang 1.15.
 
 ```bash
-go get github.com/jansorg/marketplace-stats
+GO111MODULE=on go get github.com/jansorg/marketplace-stats
 ```
 
 # Command Line Usage
