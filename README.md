@@ -13,6 +13,8 @@ Pre—built binaries are available on the [releases page](https://github.com/jan
 ![First part of a random report](./random-report.jpg)
 
 # Building
+First, make sure you have installed Golang 1.15.
+
 ```bash
 go get github.com/jansorg/marketplace-stats
 ```
