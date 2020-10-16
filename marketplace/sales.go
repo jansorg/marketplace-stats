@@ -198,7 +198,7 @@ func (s Sales) CustomerSales() []*CustomerSales {
 		result = append(result, v)
 	}
 
-	sort.Slice(result, func(i, j int) bool {
+	sort.SliceStable(result, func(i, j int) bool {
 		if result[i].TotalUSD == result[j].TotalUSD {
 			return strings.Compare(result[i].Customer.Name, result[j].Customer.Name) < 0
 		}
@@ -227,7 +227,7 @@ func (s Sales) CountrySales() []*CountrySales {
 	for _, v := range mapping {
 		result = append(result, v)
 	}
-	sort.Slice(result, func(i, j int) bool {
+	sort.SliceStable(result, func(i, j int) bool {
 		if result[i].TotalUSD == result[j].TotalUSD {
 			return strings.Compare(result[i].Country, result[j].Country) < 0
 		}
@@ -252,7 +252,7 @@ func (s Sales) SubscriptionSales() []GroupedSales {
 		},
 	}
 
-	sort.Slice(result, func(i, j int) bool {
+	sort.SliceStable(result, func(i, j int) bool {
 		return result[i].TotalUSD > result[j].TotalUSD
 	})
 	return result
@@ -274,7 +274,7 @@ func (s Sales) CustomerTypeSales() []GroupedSales {
 		},
 	}
 
-	sort.Slice(result, func(i, j int) bool {
+	sort.SliceStable(result, func(i, j int) bool {
 		return result[i].TotalUSD > result[j].TotalUSD
 	})
 	return result
@@ -300,7 +300,7 @@ func (s Sales) GroupByCurrency() []*CurrencySales {
 	for _, v := range mapping {
 		result = append(result, v)
 	}
-	sort.Slice(result, func(i, j int) bool {
+	sort.SliceStable(result, func(i, j int) bool {
 		a := result[i].TotalSalesUSD
 		b := result[j].TotalSalesUSD
 		if a == b {
@@ -313,7 +313,7 @@ func (s Sales) GroupByCurrency() []*CurrencySales {
 
 func (s Sales) SortedByDate() Sales {
 	c := s
-	sort.Slice(c, func(i, j int) bool {
+	sort.SliceStable(c, func(i, j int) bool {
 		a := c[i]
 		b := c[j]
 		if a == b {
