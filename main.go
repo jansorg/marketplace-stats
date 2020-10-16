@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/jansorg/marketplace-stats/marketplace"
 	"github.com/jansorg/marketplace-stats/report"
@@ -91,7 +92,7 @@ func getToken(token string, tokenFile string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return string(data), nil
+		return strings.TrimSpace(string(data)), nil
 	}
 	return "", fmt.Errorf("missing token")
 }
