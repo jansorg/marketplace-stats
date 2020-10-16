@@ -34,7 +34,9 @@ type HTMLReport struct {
 	Timeline *Timeline
 }
 
-func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, client marketplace.Client) (*HTMLReport, error) {
+func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.Sales, client marketplace.Client) (*HTMLReport, error) {
+	allSales := allSalesUnsorted.SortedByDate()
+
 	monthlyDownloadsUnique, err := client.DownloadsMonthly(true, "", "", "", "", "")
 	if err != nil {
 		return nil, err
@@ -63,9 +65,10 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, cl
 		}
 	}
 
-	customers := allSales.Customers()
 	week := statistic.NewWeekToday(marketplace.ServerTimeZone)
 	week.Update(allSales)
+
+	customers := allSales.Customers().SortByID()
 
 	return &HTMLReport{
 		Date:                     time.Now(),
@@ -74,7 +77,7 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSales marketplace.Sales, cl
 		Sales:                    allSales,
 		Week:                     week,
 		Years:                    years,
-		Customers:                customers.SortByID(),
+		Customers:                customers,
 		CustomerSales:            allSales.CustomerSales(),
 		CountrySales:             allSales.CountrySales(),
 		SubscriptionSales:        allSales.SubscriptionSales(),
