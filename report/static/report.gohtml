@@ -173,6 +173,9 @@
 <body>
 <h1>{{$report.PluginInfo.Name}}</h1>
 <h2 class="subtitle">{{.Date.Format "2006-01-02"}}</h2>
+<h2 class="subtitle menu small">
+    <a href="#section-monthly-churned">Churned Users</a> · <a href="#section-total-sales">Total Sales</a> · <a href="#section-sales">Sales</a>
+</h2>
 
 {{/*<div class="sections">*/}}
 {{/*    <div class="section section-chart section-centered">*/}}
@@ -403,7 +406,7 @@
     </div>
 </div>
 
-<h2>Monthly Churned Users</h2>
+<h2 id="section-monthly-churned">Monthly Churned Users</h2>
 {{ range $report.Years }}
     {{ range .Months }}
         {{ if eq (len .ChurnedCustomers) 0 }}
@@ -442,7 +445,7 @@
     {{ end }}
 {{ end }}
 
-<h2>Total Sales By Customer</h2>
+<h2 id="section-total-sales">Total Sales By Customer</h2>
 <div class="sections">
     <div class="section section-customers section-wide">
         <table class="small table-striped">
@@ -470,7 +473,7 @@
     </div>
 </div>
 
-<h2>Sales</h2>
+<h2 id="section-sales">Sales</h2>
 <table class="section-wide table-striped small" id="sales-table">
     <thead>
     <tr>
