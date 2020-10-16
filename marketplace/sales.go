@@ -311,16 +311,53 @@ func (s Sales) GroupByCurrency() []*CurrencySales {
 	return result
 }
 
-func (s Sales) SortedByDate() Sales {
-	c := s
-	sort.SliceStable(c, func(i, j int) bool {
-		a := c[i]
-		b := c[j]
-		if a == b {
-			// use ref ID if it's the same day to get a stable sort result
-			return strings.Compare(a.ReferenceID, b.ReferenceID) <= 0
+// sales, grouped by year-month-day
+func (s Sales) GroupByDate(newestDateFirst bool) []DateGroupedSales {
+	groups := make(map[YearMonthDay]Sales)
+	for _, sale := range s {
+		values := groups[sale.Date]
+		groups[sale.Date] = append(values, sale)
+	}
+
+	groupedSales := make([]DateGroupedSales, len(groups))
+	for date, sales := range groups {
+		groupedSales = append(
+			groupedSales,
+			DateGroupedSales{
+				Date:     date,
+				Name:     date.String(),
+				TotalUSD: sales.TotalSumUSD(),
+				Sales:    sales,
+			},
+		)
+	}
+
+	sort.SliceStable(groupedSales, func(i, j int) bool {
+		a := groupedSales[i]
+		b := groupedSales[j]
+
+		if newestDateFirst {
+			return a.Date.IsAfter(b.Date)
 		}
 		return !a.Date.IsAfter(b.Date)
 	})
+
+	return groupedSales
+}
+
+func (s Sales) SortedByDate() Sales {
+	c := s
+	sort.SliceStable(c, func(i, j int) bool {
+		return !c[i].Date.IsAfter(c[j].Date)
+	})
 	return c
+}
+
+func (s Sales) Reversed() Sales {
+	size := len(s)
+	rev := make(Sales, size)
+	for i, sale := range s {
+		rev[size-i-1] = sale
+	}
+	return rev
 }

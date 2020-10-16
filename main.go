@@ -67,10 +67,10 @@ func main() {
 		fatalOpt(err)
 	}
 
-	report, err := report.NewReport(pluginInfo, sales, client)
+	htmlReport, err := report.NewReport(pluginInfo, sales, client)
 	fatalOpt(err)
 
-	html, err := report.Generate()
+	html, err := htmlReport.Generate()
 	fatalOpt(err)
 
 	if *reportFileParam != "" && *reportFileParam != "-" {

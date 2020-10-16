@@ -265,7 +265,7 @@
                             title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly - {{len .ChurnedCustomers}} churned = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly ">{{ .ActiveCustomersTotal }}</td>
                         <td class="num num-percentage">
                             {{ if .HasChurnRate }}
-                            <span title="{{len .ChurnedCustomers}} of {{.ChurnRateTotalCustomers}}customers,&#xA;who bought a monthly subscription in the previous month">
+                                <span title="{{len .ChurnedCustomers}} of {{.ChurnRateTotalCustomers}}customers,&#xA;who bought a monthly subscription in the previous month">
                             {{ if gt (len .ChurnedCustomers) 0 }}
                                 <a href="#churn-{{ .Name }}">{{- printf "%.2f" .ChurnRatePercentage }}%</a>
                             {{ else }}
@@ -485,26 +485,25 @@
     <tbody>
     {{ $lastYear := -1 }}
     {{ $lastMonth := -1 }}
-    {{ $lastDate := "" }}
-    {{ $sales := $report.Sales }}
-    {{ range $i,$e := $sales }}
-        {{ with (index $sales (addInt -1 (subInt (len $sales) $i))) }}
-            {{ if or (ne $lastYear .Date.Year) (ne $lastMonth .Date.Month) }}
-                <tr>
-                    <th colspan="6" class="subheading">
-                        <h3><a href="#month-{{.Date.Year}}-{{.Date.Month}}">{{.Date.Month}} {{.Date.Year}}</a></h3>
-                    </th>
-                    {{ $lastYear = .Date.Year }}
-                    {{ $lastMonth = .Date.Month }}
-                </tr>
-            {{end}}
+    {{ range $report.Sales.GroupByDate true }}
+        {{ if or (ne $lastYear .Date.Year) (ne $lastMonth .Date.Month) }}
+            <tr>
+                <th colspan="6" class="subheading">
+                    <h3><a href="#month-{{.Date.Year}}-{{.Date.Month}}">{{.Date.Month}} {{.Date.Year}}</a></h3>
+                </th>
+                {{ $lastYear = .Date.Year }}
+                {{ $lastMonth = .Date.Month }}
+            </tr>
+        {{end}}
 
+        {{ $printedDate := false }}
+        {{ range .Sales }}
             <tr>
                 <td class="date">
                     {{ $newDate := .Date.String }}
-                    {{ if ne $lastDate $newDate }}
-                        {{$lastDate = $newDate}}
+                    {{ if not $printedDate }}
                         {{ $newDate }}
+                        {{ $printedDate = true }}
                     {{ end }}
                 </td>
                 <td><a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a></td>
