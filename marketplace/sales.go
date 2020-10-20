@@ -15,6 +15,9 @@ type AccountType string
 // Sales is a slice of sales. It offers a wide range of methods to aggregate the data.
 type Sales []Sale
 
+// CustomersMap maps a customer ID to customer
+type CustomersMap map[CustomerID]Customer
+
 const (
 	AnnualSubscription  Subscription = "Annual"
 	MonthlySubscription Subscription = "Monthly"
@@ -132,8 +135,8 @@ func (s Sales) ByNewCustomers(allPreviousSales Sales, referenceDate time.Time) S
 	})
 }
 
-func (s Sales) CustomersMap() map[CustomerID]Customer {
-	result := make(map[CustomerID]Customer)
+func (s Sales) CustomersMap() CustomersMap {
+	result := make(CustomersMap)
 	for _, s := range s {
 		customer := s.Customer
 		_, ok := result[customer.ID]
@@ -360,4 +363,15 @@ func (s Sales) Reversed() Sales {
 		rev[size-i-1] = sale
 	}
 	return rev
+}
+
+func (m CustomersMap) Without(customersMap CustomersMap) CustomersMap {
+	result := make(CustomersMap, len(m))
+	for k, v := range m {
+		_, found := customersMap[k]
+		if !found {
+			result[k] = v
+		}
+	}
+	return result
 }

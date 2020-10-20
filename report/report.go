@@ -109,7 +109,6 @@ func toFloat(v interface{}) (float64, error) {
 }
 
 func (r HTMLReport) Generate() (string, error) {
-
 	funcMap := template.FuncMap{
 		"addInt": func(a, b int) int {
 			return a + b

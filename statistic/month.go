@@ -14,7 +14,7 @@ type Month struct {
 	DownloadsUnique int
 	TotalSalesUSD   AmountAndFee
 
-	// Customers who bought in the month
+	// Customers who bought in the current month
 	Customers        int
 	CustomersAnnual  int
 	CustomersMonthly int
@@ -56,7 +56,7 @@ func (m *Month) IsActiveMonth() bool {
 }
 
 func (m *Month) ChurnRateTotalCustomers() int {
-	return m.CustomersMonthly + len(m.ChurnedCustomers)
+	return m.PrevMonth.ActiveCustomersMonthly
 }
 
 func (m *Month) DownloadsTotalRatio(downloads int) marketplace.Amount {
@@ -94,10 +94,10 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	m.CustomersMonthly = len(currentMonthSales.ByMonthlySubscription().CustomersMap())
 
 	// New customers
-	newCustomers := currentMonthSales.ByNewCustomers(allPreviousSales, m.Date)
-	m.NewCustomersMonthly = len(newCustomers.ByMonthlySubscription().CustomersMap())
-	m.NewCustomersAnnual = len(newCustomers.ByAnnualSubscription().CustomersMap())
-	m.NewCustomers = len(newCustomers.CustomersMap())
+	newAnnualCustomersMap := currentMonthSales.ByNewCustomers(allPreviousSales, m.Date).ByAnnualSubscription().CustomersMap()
+	m.NewCustomersAnnual = len(newAnnualCustomersMap)
+	m.NewCustomersMonthly = len(currentMonthSales.ByNewCustomers(allPreviousSales, m.Date).ByMonthlySubscription().CustomersMap().Without(newAnnualCustomersMap))
+	m.NewCustomers = m.NewCustomersMonthly + m.NewCustomersAnnual
 
 	// Sales
 	m.TotalSalesUSD.Total = currentMonthSales.TotalSumUSD()
@@ -109,15 +109,15 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 		nextMonth := m.Date.AddDate(0, 1, 0)
 		nextMonthSales := sales.ByMonth(nextMonth.Year(), nextMonth.Month())
 
-		m.ChurnRate, m.ChurnedCustomers, _ = computeMonthlyChurn(m.Date, previousMonthSales, currentMonthSales, nextMonthSales)
+		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(m.Date, previousMonthSales, currentMonthSales, nextMonthSales)
 		m.ChurnRatePercentage = m.ChurnRate * 100
 	}
 
 	// Active customers
 	if previousMonthData != nil {
-		m.ActiveCustomersMonthly = previousMonthData.ActiveCustomersMonthly + m.NewCustomersMonthly - len(m.ChurnedCustomers)
+		m.ActiveCustomersMonthly = previousMonthData.ActiveCustomersMonthly - len(m.ChurnedCustomers) + m.NewCustomersMonthly
 		m.ActiveCustomersAnnual = previousMonthData.ActiveCustomersAnnual + m.NewCustomersAnnual
-		m.ActiveCustomersTotal = previousMonthData.ActiveCustomersTotal + m.NewCustomers - len(m.ChurnedCustomers)
+		m.ActiveCustomersTotal = previousMonthData.ActiveCustomersTotal - len(m.ChurnedCustomers) + m.NewCustomers
 	} else {
 		m.ActiveCustomersMonthly = m.NewCustomersMonthly
 		m.ActiveCustomersAnnual = m.NewCustomersAnnual
@@ -155,14 +155,12 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	}
 }
 
-func computeMonthlyChurn(date time.Time, previous marketplace.Sales, allCurrentMonth marketplace.Sales, allNextMonth marketplace.Sales) (float64, []marketplace.Customer, int) {
-	if len(previous) == 0 {
-		return 0.0, nil, 0
+func computeMonthlyChurn(date time.Time, allPreviousMonth marketplace.Sales, allCurrentMonth marketplace.Sales, allNextMonth marketplace.Sales) (float64, []marketplace.Customer) {
+	if len(allPreviousMonth) == 0 {
+		return 0.0, nil
 	}
 
-	previousMonthCustomers := previous.CustomerSalesMap()
 	graceTimeEnd := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, marketplace.ServerTimeZone).AddDate(0, 1, 3)
-
 	graceTimeSales := append(allCurrentMonth, allNextMonth...).Before(graceTimeEnd)
 	graceTimeMonthlySales := graceTimeSales.ByMonthlySubscription().CustomerSalesMap()
 	graceTimeAnnualSales := graceTimeSales.ByAnnualSubscription().CustomerSalesMap()
@@ -173,19 +171,21 @@ func computeMonthlyChurn(date time.Time, previous marketplace.Sales, allCurrentM
 	currentMonthRef := now.AddDate(0, 0, -3)
 	isActiveMonth := date.Year() == nowYear && date.Month() == nowMonth
 
+	previousMonthMonthlyCustomers := allPreviousMonth.ByMonthlySubscription().CustomerSalesMap()
+
 	// collect customers, which bought in the previous, but not in current month
 	var churned []marketplace.Customer
-	for id, candidate := range previousMonthCustomers {
+	for id, candidate := range previousMonthMonthlyCustomers {
 		_, ok := graceTimeMonthlySales[id]
 		_, upgraded := graceTimeAnnualSales[id]
 		paymentExpected := !isActiveMonth || candidate.LatestPurchase().AddDate(0, 1, 0).Before(currentMonthRef)
 
+		// make sure that the user did not upgrade to yearly in this month
 		if !ok && !upgraded && paymentExpected {
-			// make sure that the user did not upgrade to yearly in this month
 			churned = append(churned, candidate.Customer)
 		}
 	}
 
-	totalUsers := len(previousMonthCustomers)
-	return float64(len(churned)) / float64(totalUsers), churned, totalUsers
+	totalUsers := len(previousMonthMonthlyCustomers)
+	return float64(len(churned)) / float64(totalUsers), churned
 }

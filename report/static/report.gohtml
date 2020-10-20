@@ -263,12 +263,12 @@
                         <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
-                        <td class="num">{{- .AnnualRevenueUSD.Format }} USD</td>
+                        <td class="num">{{ .AnnualRevenueUSD.Format }} USD</td>
                         <td class="num"
-                            title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly - {{len .ChurnedCustomers}} churned = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly ">{{ .ActiveCustomersTotal }}</td>
+                            title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{len .ChurnedCustomers}} churned monthly users">{{ .ActiveCustomersTotal }}</td>
                         <td class="num num-percentage">
                             {{ if .HasChurnRate }}
-                                <span title="{{len .ChurnedCustomers}} of {{.ChurnRateTotalCustomers}}customers,&#xA;who bought a monthly subscription in the previous month">
+                                <span title="{{len .ChurnedCustomers}} of {{.ChurnRateTotalCustomers}} customers,&#xA;who bought a monthly subscription in the previous month">
                             {{ if gt (len .ChurnedCustomers) 0 }}
                                 <a href="#churn-{{ .Name }}">{{- printf "%.2f" .ChurnRatePercentage }}%</a>
                             {{ else }}
