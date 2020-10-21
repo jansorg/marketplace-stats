@@ -129,6 +129,19 @@ func (r HTMLReport) Generate() (string, error) {
 
 			return fmt.Sprintf("%.2f%%", f1/f2*100.0), nil
 		},
+		"growthPercentage": func(a, b interface{}) (string, error) {
+			oldValue, err := toFloat(a)
+			if err != nil {
+				return "", err
+			}
+
+			newValue, err := toFloat(b)
+			if err != nil {
+				return "", err
+			}
+
+			return fmt.Sprintf("%.0f%%", ((newValue/oldValue)-1.0)*100.0), nil
+		},
 	}
 
 	templateString := FSMustString(false, "/static/report.gohtml")

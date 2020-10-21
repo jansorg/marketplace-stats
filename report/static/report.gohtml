@@ -14,6 +14,8 @@
             --link-color: #4545e6;
             --stripe-bgcolor: #f2f2f2;
             --separator-color: #808080;
+            --positive-color: #119e39;
+            --negative-color: #ff0000;
         }
 
         /* reset */
@@ -137,6 +139,14 @@
             text-align: right;
         }
 
+        .num-plus {
+            color: var(--positive-color);
+        }
+
+        .num-minus {
+            color: var(--negative-color);
+        }
+
         .today {
             color: var(--now-color);
             font-weight: 800;
@@ -174,7 +184,10 @@
 <h1>{{$report.PluginInfo.Name}}</h1>
 <h2 class="subtitle">{{.Date.Format "2006-01-02"}}</h2>
 <h2 class="subtitle menu small">
-    <a href="#section-monthly-churned">Churned Users</a> · <a href="#section-total-sales">Total Sales</a> · <a href="#section-sales">Sales</a>
+      <a href="#section-total-sales">Total Sales</a>
+    · <a href="#section-sales">Sales</a>
+    · <a href="#section-growth">Growth</a>
+    · <a href="#section-monthly-churned">Churned Users</a>
 </h2>
 
 {{/*<div class="sections">*/}}
@@ -444,6 +457,47 @@
         {{ end }}
     {{ end }}
 {{ end }}
+
+<h2 id="section-growth">Growth</h2>
+<div class="sections">
+    <div class="section section-months section-wide">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th><h3>Name</h3></th>
+                <th class="num">Unique Downloads</th>
+                <th class="num">Active Customers</th>
+                <th class="num">Total Sales USD</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .Years }}
+                {{ range .Months }}
+                    {{ if or (not .PrevMonth) .IsActiveMonth }}
+                        <tr id="growth-{{.Name}}">
+                            <td>{{.Name}}</td>
+                            <td class="num">—</td>
+                            <td class="num">—</td>
+                            <td class="num">—</td>
+                        </tr>
+                    {{ else }}
+                        <tr id="growth-{{.Name}}">
+                            <td>{{.Name}}</td>
+                            <td class="num {{if lt .PrevMonth.DownloadsUnique .DownloadsUnique}}num-plus{{else}}num-minus{{end}}"
+                                title="{{.DownloadsUnique}} unique downloads">{{growthPercentage .PrevMonth.DownloadsUnique .DownloadsUnique}}</td>
+                            <td class="num {{if lt .PrevMonth.ActiveCustomersTotal .ActiveCustomersTotal}}num-plus{{else}}num-minus{{end}}"
+                                title="{{.ActiveCustomersTotal}} active customers">{{growthPercentage .PrevMonth.ActiveCustomersTotal .ActiveCustomersTotal}}</td>
+                            <td class="num {{if lt .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}num-plus{{else}}num-minus{{end}}"
+                                title="{{.TotalSalesUSD.Total}}">{{growthPercentage .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}</td>
+                        </tr>
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 
 <h2 id="section-total-sales">Total Sales By Customer</h2>
 <div class="sections">

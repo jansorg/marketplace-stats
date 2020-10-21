@@ -40,7 +40,7 @@ type DownloadData struct {
 }
 
 type DownloadResponse struct {
-	Measure    string `json:"downloads-unique"`
+	Measure    string `json:"measure"`
 	Filters    []Filter
 	Dimension1 string `json:"dim1"`
 	Data       DownloadData
