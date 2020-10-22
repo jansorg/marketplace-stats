@@ -140,7 +140,7 @@ func (r HTMLReport) Generate() (string, error) {
 				return "", err
 			}
 
-			return fmt.Sprintf("%.0f%%", ((newValue/oldValue)-1.0)*100.0), nil
+			return fmt.Sprintf("%+.0f%%", ((newValue/oldValue)-1.0)*100.0), nil
 		},
 	}
 
