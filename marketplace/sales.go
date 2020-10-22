@@ -322,7 +322,7 @@ func (s Sales) GroupByDate(newestDateFirst bool) []DateGroupedSales {
 		groups[sale.Date] = append(values, sale)
 	}
 
-	groupedSales := make([]DateGroupedSales, len(groups))
+	var groupedSales []DateGroupedSales
 	for date, sales := range groups {
 		groupedSales = append(
 			groupedSales,
