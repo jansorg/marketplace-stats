@@ -54,7 +54,7 @@ func randomSales(max int, maxMonths int, customers marketplace.Customers) market
 
 		customer := customers[rand.Intn(len(customers)-1)]
 		amount := rand.Float64() * 30
-		amountUSD := amount * (1+rand.Float64())
+		amountUSD := amount * (1 + rand.Float64())
 
 		if customer.Type == marketplace.AccountTypeOrganization {
 			amount *= 3

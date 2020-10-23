@@ -5,9 +5,9 @@ import "time"
 type DownloadAndDate struct {
 	Downloads int
 
-	Year      int
-	Month     time.Month
-	Day       int
+	Year  int
+	Month time.Month
+	Day   int
 }
 
 func (d DownloadAndDate) Date() YearMonthDay {
