@@ -340,7 +340,8 @@
         <table class="small table-striped">
             <thead>
             <tr>
-                <th colspan="3"><h2>Top Countries</h2></th>
+                <th colspan="2"><h2>Top Countries</h2></th>
+                <th>% of Sales</th>
             </tr>
             </thead>
             <tbody class="small">
@@ -363,7 +364,8 @@
         <table class="small table-striped">
             <thead>
             <tr>
-                <th colspan="4"><h2>Top Currencies</h2></th>
+                <th colspan="3"><h2>Top Currencies</h2></th>
+                <th>% of Sales</th>
             </tr>
             </thead>
             <tbody class="small">
@@ -384,7 +386,8 @@
         <table class="small table-striped">
             <thead>
             <tr>
-                <th colspan="3"><h2>Subscription</h2></th>
+                <th colspan="2"><h2>Subscription</h2></th>
+                <th>% of Sales</th>
             </tr>
             </thead>
             <tbody class="small">
@@ -404,17 +407,27 @@
             <thead>
             <tr>
                 <th colspan="3"><h2>Customer Type</h2></th>
+                <th>% of Sales</th>
             </tr>
             </thead>
             <tbody class="small">
-            {{ range .CustomerTypeSales }}
+            {{ range $report.CustomerTypeSales }}
                 <tr>
                     <td>{{.Name}}</td>
+                    <td class="num">{{.Sales.CustomerCount}}</td>
                     <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
                     <td class="num">{{percentage .TotalUSD $reportTotalUSD}}</td>
                 </tr>
             {{ end }}
             </tbody>
+            <tfoot>
+            <tr>
+                <th></th>
+                <th class="num">{{$report.Sales.CustomerCount}}</th>
+                <th class="num">{{$report.Sales.TotalSumUSD.Format}} USD</th>
+                <th class="num">100.00%</th>
+            </tr>
+            </tfoot>
         </table>
     </div>
 

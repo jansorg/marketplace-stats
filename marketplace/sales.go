@@ -175,6 +175,10 @@ func (s Sales) PaidOutUSD() Amount {
 	return s.TotalSumUSD() - s.FeeSumUSD()
 }
 
+func (s Sales) CustomerCount() int {
+	return len(s.CustomerSalesMap())
+}
+
 func (s Sales) CustomerSalesMap() map[CustomerID]*CustomerSales {
 	mapping := make(map[CustomerID]*CustomerSales)
 	for _, sale := range s {
