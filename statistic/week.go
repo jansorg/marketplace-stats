@@ -16,7 +16,7 @@ type Week struct {
 
 func NewWeekToday(timeZone *time.Location) *Week {
 	today := time.Now().In(timeZone)
-	firstDay := today.AddDate(0, 0, -int(today.Weekday())+1)
+	firstDay := today.AddDate(0, 0, -int(today.Weekday()))
 	return NewWeek(firstDay)
 }
 
