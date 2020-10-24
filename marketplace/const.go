@@ -2,6 +2,7 @@ package marketplace
 
 import (
 	"time"
+	_ "time/tzdata"
 )
 
 var ServerTimeZone, _ = time.LoadLocation("Europe/Berlin")
