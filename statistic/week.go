@@ -15,9 +15,8 @@ type Week struct {
 }
 
 func NewWeekToday(timeZone *time.Location) *Week {
-	today := time.Now().In(timeZone)
-	firstDay := today.AddDate(0, 0, -int(today.Weekday()))
-	return NewWeek(firstDay)
+	year, week := time.Now().In(timeZone).ISOWeek()
+	return NewWeek(firstDayOfISOWeek(year, week, marketplace.ServerTimeZone))
 }
 
 func NewWeek(firstDay time.Time) *Week {
@@ -49,4 +48,23 @@ func (m *Week) Update(sales marketplace.Sales) {
 		Total: weekSales.TotalSumUSD(),
 		Fee:   weekSales.FeeSumUSD(),
 	}
+}
+
+//https://stackoverflow.com/questions/18624177/go-unix-timestamp-for-first-day-of-the-week-from-iso-year-week
+func firstDayOfISOWeek(year int, week int, timezone *time.Location) time.Time {
+	date := time.Date(year, 0, 0, 0, 0, 0, 0, timezone)
+	isoYear, isoWeek := date.ISOWeek()
+	for date.Weekday() != time.Monday { // iterate back to Monday
+		date = date.AddDate(0, 0, -1)
+		isoYear, isoWeek = date.ISOWeek()
+	}
+	for isoYear < year { // iterate forward to the first day of the first week
+		date = date.AddDate(0, 0, 1)
+		isoYear, isoWeek = date.ISOWeek()
+	}
+	for isoWeek < week { // iterate forward to the first day of the given week
+		date = date.AddDate(0, 0, 1)
+		isoYear, isoWeek = date.ISOWeek()
+	}
+	return date
 }
