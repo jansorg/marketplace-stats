@@ -6,7 +6,10 @@
     <title>{{$report.PluginInfo.Name}} Sales Report</title>
     <meta charset="UTF-8">
     <style type="text/css">
+        /* Default font */
         @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&display=swap');
+        /* Chinese fallback */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC&display=swap');
 
         :root {
             --heading-color: #00008b;
@@ -27,7 +30,7 @@
 
         /* html tags */
         html {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Lato', 'Noto Sans SC', sans-serif;
         }
 
         body {
