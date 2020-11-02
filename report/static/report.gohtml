@@ -146,9 +146,13 @@
             font-style: italic;
         }
 
-        .new-customer {
-            font-style: italic;
-            font-size: 80%;
+        .badge-new {
+            font-size: .8em;
+            line-height: 1.0;
+            background-color: #e6b8b8;
+            border-radius: 3px;
+            padding: 1px 3px;
+            display: inline-block;
         }
 
         .desc {
@@ -617,7 +621,7 @@
                     {{ end }}
                 </td>
                 <td><a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a> {{if .Date.Equals $firstPurchaseDate}}
-                    <span class="new-customer">(new)</span>{{end}}</td>
+                        <span class="badge-new">new</span>{{end}}</td>
                 <td class="num">{{if ne "USD" .Currency}}{{.Amount.Format}} {{.Currency}}{{end}}</td>
                 <td class="num">{{.AmountUSD.Format}} USD</td>
                 <td>{{.Period}}</td>
