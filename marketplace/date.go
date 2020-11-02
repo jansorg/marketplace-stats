@@ -37,6 +37,10 @@ func (d YearMonthDay) IsAfter(o YearMonthDay) bool {
 	return d.AsDate().After(o.AsDate())
 }
 
+func (d YearMonthDay) IsBefore(o YearMonthDay) bool {
+	return d.AsDate().Before(o.AsDate())
+}
+
 func (d YearMonthDay) Equals(o YearMonthDay) bool {
 	return d.Year() == o.Year() && d.Month() == o.Month() && d.Day() == o.Day()
 }

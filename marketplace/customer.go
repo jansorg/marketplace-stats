@@ -28,6 +28,19 @@ func (c *CustomerSales) LatestPurchase() time.Time {
 	return lastDate
 }
 
+// FirstPurchase returns the first purchase of this customer.
+// If there are no sales, then the zero value of time.Time is returned.
+func (c *CustomerSales) FirstPurchase() YearMonthDay {
+	var firstDate YearMonthDay
+	for _, s := range c.Sales {
+		date := s.Date
+		if date.IsBefore(firstDate) {
+			firstDate = date
+		}
+	}
+	return firstDate
+}
+
 // NewCustomer returns a new customer
 func NewCustomer(id CustomerID, name, country string, accountType AccountType) Customer {
 	return Customer{

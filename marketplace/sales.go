@@ -18,6 +18,9 @@ type Sales []Sale
 // CustomersMap maps a customer ID to customer
 type CustomersMap map[CustomerID]Customer
 
+// CustomerDateMap maps a customer ID to a YearMonthDate
+type CustomerDateMap map[CustomerID]YearMonthDay
+
 const (
 	AnnualSubscription  Subscription = "Annual"
 	MonthlySubscription Subscription = "Monthly"
@@ -369,8 +372,19 @@ func (s Sales) Reversed() Sales {
 	return rev
 }
 
+func (s Sales) CustomersFirstPurchase() CustomerDateMap {
+	result := make(CustomerDateMap)
+	for _, sale := range s {
+		stored, found := result[sale.Customer.ID]
+		if !found || sale.Date.IsBefore(stored) {
+			result[sale.Customer.ID] = sale.Date
+		}
+	}
+	return result
+}
+
 func (m CustomersMap) Without(customersMap CustomersMap) CustomersMap {
-	result := make(CustomersMap, len(m))
+	result := make(CustomersMap)
 	for k, v := range m {
 		_, found := customersMap[k]
 		if !found {

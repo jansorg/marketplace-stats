@@ -1,7 +1,8 @@
 {{ $report := . }}
 {{ $reportTotalUSD := .Sales.TotalSumUSD }}
+{{ $firstPurchases := .Sales.CustomersFirstPurchase }}
 
-<html>
+<html lang="en">
 <head>
     <title>{{$report.PluginInfo.Name}} Sales Report</title>
     <meta charset="UTF-8">
@@ -143,6 +144,11 @@
 
         .desc, .incomplete {
             font-style: italic;
+        }
+
+        .new-customer {
+            font-style: italic;
+            font-size: 80%;
         }
 
         .desc {
@@ -600,6 +606,8 @@
 
         {{ $printedDate := false }}
         {{ range .Sales }}
+            {{ $firstPurchaseDate := index $firstPurchases .Customer.ID }}
+
             <tr>
                 <td class="date">
                     {{ $newDate := .Date.String }}
@@ -608,7 +616,8 @@
                         {{ $printedDate = true }}
                     {{ end }}
                 </td>
-                <td><a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a></td>
+                <td><a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a> {{if .Date.Equals $firstPurchaseDate}}
+                    <span class="new-customer">(new)</span>{{end}}</td>
                 <td class="num">{{if ne "USD" .Currency}}{{.Amount.Format}} {{.Currency}}{{end}}</td>
                 <td class="num">{{.AmountUSD.Format}} USD</td>
                 <td>{{.Period}}</td>
