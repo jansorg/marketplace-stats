@@ -491,6 +491,7 @@
                     <th><h3>{{.Name}}</h3></th>
                     <th>ID</th>
                     <th>Type</th>
+                    <th>First Purchase</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -499,6 +500,7 @@
                         <td>{{ .Name }}</td>
                         <td>{{ .ID }}</td>
                         <td>{{ .Type }}</td>
+                        <td>{{ index $firstPurchases .ID }}</td>
                     </tr>
                 {{ end }}
                 </tbody>
