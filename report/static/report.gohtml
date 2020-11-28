@@ -477,6 +477,26 @@
             </tbody>
         </table>
     </div>
+
+    <div class="section section-small section-weekdays">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th colspan="2"><h2>Weekdays</h2></th>
+                <th>% of Sales</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .WeekdaySales }}
+                <tr>
+                    <td>{{.Name}}</td>
+                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
+                    <td class="num">{{percentage .TotalUSD $reportTotalUSD}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <h2 id="section-monthly-churned">Monthly Churned Users</h2>

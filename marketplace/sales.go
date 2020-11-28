@@ -268,6 +268,23 @@ func (s Sales) SubscriptionSales() []GroupedSales {
 	return result
 }
 
+func (s Sales) GroupByWeekday() []GroupedSales {
+	result := make([]GroupedSales, 7)
+	for day := time.Sunday; day <= time.Saturday; day++ {
+		result[int(day)] = GroupedSales{
+			Name: day.String(),
+		}
+	}
+
+	for _, sale := range s {
+		key := int(sale.Date.AsDate().Weekday())
+		sales := append(result[key].Sales, sale)
+		result[key].Sales = sales
+		result[key].TotalUSD += sale.AmountUSD
+	}
+	return result
+}
+
 func (s Sales) CustomerTypeSales() []GroupedSales {
 	organizations := s.ByAccountType(AccountTypeOrganization)
 	persons := s.ByAccountType(AccountTypePersonal)

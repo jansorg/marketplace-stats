@@ -31,6 +31,7 @@ type HTMLReport struct {
 	SubscriptionSales []marketplace.GroupedSales
 	CustomerTypeSales []marketplace.GroupedSales
 	CurrencySales     []*marketplace.CurrencySales
+	WeekdaySales      []marketplace.GroupedSales
 
 	Timeline *Timeline
 }
@@ -84,6 +85,7 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.S
 		SubscriptionSales:        allSales.SubscriptionSales(),
 		CustomerTypeSales:        allSales.CustomerTypeSales(),
 		CurrencySales:            allSales.GroupByCurrency(),
+		WeekdaySales:             allSales.GroupByWeekday(),
 		CustomerCount:            len(customers),
 		AnnualSubscriptionCount:  len(allSales.ByAnnualSubscription().Customers()),
 		MonthlySubscriptionCount: len(allSales.ByMonthlySubscription().Customers()),
