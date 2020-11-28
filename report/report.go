@@ -4,6 +4,7 @@ package report
 
 import (
 	"fmt"
+	"github.com/jansorg/marketplace-stats/util"
 	"html/template"
 	"strings"
 	"time"
@@ -115,6 +116,9 @@ func (r HTMLReport) Generate() (string, error) {
 		},
 		"subInt": func(a, b int) int {
 			return a - b
+		},
+		"formatInt": func(n int) string {
+			return util.FormatInt(n)
 		},
 		"percentage": func(a, b interface{}) (string, error) {
 			f1, err := toFloat(a)

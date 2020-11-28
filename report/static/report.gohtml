@@ -1,6 +1,7 @@
 {{ $report := . }}
 {{ $reportTotalUSD := .Sales.TotalSumUSD }}
 {{ $firstPurchases := .Sales.CustomersFirstPurchase }}
+{{ $lastPurchases := .Sales.CustomersLastPurchase }}
 
 <html lang="en">
 <head>
@@ -23,7 +24,7 @@
         }
 
         /* reset */
-        html, body, h1, h2, h3, p, div, table, tr, th, td, svg, img {
+        html, body, h1, h2, h3, h4, h5, p, div, table, tr, th, td, svg, img {
             margin: 0;
             padding: 0;
             line-height: 1.4;
@@ -39,7 +40,7 @@
             margin: 2rem auto;
         }
 
-        h1, h2, h3 {
+        h1, h2, h3, h4 {
             color: var(--heading-color)
         }
 
@@ -53,7 +54,7 @@
             font-size: 1.5rem;
         }
 
-        h3 {
+        h3, h4 {
             font-size: 1rem;
         }
 
@@ -97,7 +98,7 @@
             border-bottom: 1px solid var(--separator-color);
         }
 
-        thead h2, thead h3 {
+        thead h2, thead h3, thead h4 {
             font-size: 1em;
             white-space: nowrap;
         }
@@ -142,6 +143,10 @@
             font-size: .8rem;
         }
 
+        .tiny {
+            font-size: .7rem;
+        }
+
         .desc, .incomplete {
             font-style: italic;
         }
@@ -160,7 +165,12 @@
         }
 
         .table-even {
-            width: 50%;
+            width: 60%;
+            table-layout: fixed;
+        }
+
+        .table-compact {
+            /*width: min-content;*/
             table-layout: fixed;
         }
 
@@ -169,7 +179,7 @@
             white-space: nowrap;
         }
 
-        th.num, td.num, th.date, td.date {
+        th.num, td.num, th.date, td.date, th.col-right, td.col-right {
             text-align: right;
         }
 
@@ -179,6 +189,10 @@
 
         .num-minus {
             color: var(--negative-color);
+        }
+
+        .person {
+            white-space: nowrap;
         }
 
         .today {
@@ -203,13 +217,13 @@
             margin: 0 1rem 0 0;
         }
 
-        .section-wide, .section-wide table {
-            width: 100%;
+        .section-fit {
+            width: max-content;
+            margin: 0 1rem 0 0;
         }
 
-        .section-chart {
-            width: 80%;
-            margin: 0 auto;
+        .section-wide, .section-wide table {
+            width: 100%;
         }
     </style>
 </head>
@@ -327,7 +341,8 @@
                                 —
                             {{ end }}
                         </td>
-                        <td class="num">{{.DownloadsTotal}}</td>
+                        <td class="num"
+                            title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">{{formatInt .DownloadsTotal}}</td>
                     </tr>
                 {{ end }}
                 </tbody>
@@ -337,10 +352,7 @@
                     <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
                     <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
                     <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
+                    <th colspan="4"></th>
                 </tr>
                 </tfoot>
             {{ end }}
@@ -485,26 +497,45 @@
                 </tbody>
             </table>
         {{ else }}
-            <table class="table-even table-striped small" id="churn-{{.Name}}">
-                <thead>
-                <tr>
-                    <th><h3>{{.Name}}</h3></th>
-                    <th>ID</th>
-                    <th>Type</th>
-                    <th>First Purchase</th>
-                </tr>
-                </thead>
-                <tbody>
-                {{ range .ChurnedCustomers.SortByID }}
+            <div class="sections">
+                <table class="table-even table-striped small" id="churn-{{.Name}}">
+                    <thead>
                     <tr>
-                        <td>{{ .Name }}</td>
-                        <td>{{ .ID }}</td>
-                        <td>{{ .Type }}</td>
-                        <td>{{ index $firstPurchases .ID }}</td>
+                        <th><h3>{{.Name}}</h3></th>
+                        <th>Type</th>
+                        <th class="date">Last Purchase</th>
+                        <th class="date">First Purchase</th>
                     </tr>
-                {{ end }}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    {{ range .ChurnedCustomers.SortByDateMapping $lastPurchases }}
+                        <tr>
+                            <td class="person"><a title="{{.Country}}" href="#customer-{{.ID}}">{{ .Name }}</a></td>
+                            <td>{{ .Type }}</td>
+                            <td class="date">{{ index $lastPurchases .ID }}</td>
+                            <td class="date">{{ index $firstPurchases .ID }}</td>
+                        </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+
+                <table class="table-striped table-compact tiny">
+                    <thead>
+                    <tr>
+                        <th class="col-right"><h4>Country</h4></th>
+                        <th class="num">Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{ range .ChurnedCustomers.GroupByCountry }}
+                        <tr>
+                            <td class="col-right">{{.Name}}</td>
+                            <td class="num">{{len .Customers}}</td>
+                        </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+            </div>
         {{ end }}
     {{ end }}
 {{ end }}
@@ -539,13 +570,13 @@
                             <td>{{.Name}} {{- if .IsActiveMonth}} <span class="incomplete">(incomplete)</span>{{end}}
                             </td>
                             <td class="num {{if lt .PrevMonth.DownloadsUnique .DownloadsUnique}}num-plus{{else}}num-minus{{end}}"
-                                title="{{.DownloadsUnique}} unique downloads">{{growthPercentage .PrevMonth.DownloadsUnique .DownloadsUnique}}</td>
+                                title="{{formatInt .DownloadsUnique}} unique downloads">{{growthPercentage .PrevMonth.DownloadsUnique .DownloadsUnique}}</td>
                             <td class="num {{if lt .PrevMonth.ActiveCustomersTotal .ActiveCustomersTotal}}num-plus{{else}}num-minus{{end}}"
-                                title="{{.ActiveCustomersTotal}} active customers">{{growthPercentage .PrevMonth.ActiveCustomersTotal .ActiveCustomersTotal}}</td>
+                                title="{{formatInt .ActiveCustomersTotal}} active customers">{{growthPercentage .PrevMonth.ActiveCustomersTotal .ActiveCustomersTotal}}</td>
                             <td class="num {{if lt .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}num-plus{{else}}num-minus{{end}}"
-                                title="{{.TotalSalesUSD.Total}}">{{growthPercentage .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}</td>
+                                title="{{.TotalSalesUSD.Total.Format}} USD this month">{{growthPercentage .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}</td>
                             <td class="num {{if lt .PrevMonth.AnnualRevenueUSD .AnnualRevenueUSD}}num-plus{{else}}num-minus{{end}}"
-                                title="{{.AnnualRevenueUSD.Format}}">{{growthPercentage .PrevMonth.AnnualRevenueUSD .AnnualRevenueUSD}}</td>
+                                title="ARR: {{.AnnualRevenueUSD.Format}} USD">{{growthPercentage .PrevMonth.AnnualRevenueUSD .AnnualRevenueUSD}}</td>
                         </tr>
                     {{ end }}
                 {{ end }}

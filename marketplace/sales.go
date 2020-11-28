@@ -383,6 +383,17 @@ func (s Sales) CustomersFirstPurchase() CustomerDateMap {
 	return result
 }
 
+func (s Sales) CustomersLastPurchase() CustomerDateMap {
+	result := make(CustomerDateMap)
+	for _, sale := range s {
+		stored, found := result[sale.Customer.ID]
+		if !found || sale.Date.IsAfter(stored) {
+			result[sale.Customer.ID] = sale.Date
+		}
+	}
+	return result
+}
+
 func (m CustomersMap) Without(customersMap CustomersMap) CustomersMap {
 	result := make(CustomersMap)
 	for k, v := range m {
