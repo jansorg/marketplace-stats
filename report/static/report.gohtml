@@ -2,6 +2,7 @@
 {{ $reportTotalUSD := .Sales.TotalSumUSD }}
 {{ $firstPurchases := .Sales.CustomersFirstPurchase }}
 {{ $lastPurchases := .Sales.CustomersLastPurchase }}
+{{ $customerSalesMap := .Sales.CustomerSalesMap }}
 
 <html lang="en">
 <head>
@@ -503,6 +504,7 @@
 <p class="desc">Users, who paid for a monthly subscription in the previous month and didn't pay the current month.</p>
 {{ range $report.Years }}
     {{ range .Months }}
+        {{ $month := . }}
         {{ if eq (len .ChurnedCustomers) 0 }}
             <table class="table-even small" id="churn-{{.Name}}">
                 <thead>
@@ -521,10 +523,11 @@
                 <table class="table-even table-striped small" id="churn-{{.Name}}">
                     <thead>
                     <tr>
-                        <th><h3>{{.Name}}</h3></th>
+                        <th style="width:30%;"><h3>{{.Name}}</h3></th>
                         <th>Type</th>
+                        <th class="num" style="width:15%;">Months</th>
+                        <th class="date">First</th>
                         <th class="date">Last Purchase</th>
-                        <th class="date">First Purchase</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -532,8 +535,9 @@
                         <tr>
                             <td class="person"><a title="{{.Country}}" href="#customer-{{.ID}}">{{ .Name }}</a></td>
                             <td>{{ .Type }}</td>
-                            <td class="date">{{ index $lastPurchases .ID }}</td>
+                            <td class="num">{{ $customerSalesMap.PaidMonths .ID $month.Date }}</td>
                             <td class="date">{{ index $firstPurchases .ID }}</td>
+                            <td class="date">{{ index $lastPurchases .ID }}</td>
                         </tr>
                     {{ end }}
                     </tbody>
@@ -551,6 +555,24 @@
                         <tr>
                             <td class="col-right">{{.Name}}</td>
                             <td class="num">{{len .Customers}}</td>
+                        </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+
+                <table class="table-striped table-compact tiny">
+                    <thead>
+                    <tr>
+                        <th class="col-right"><h4>Paid months</h4></th>
+                        <th class="num">Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{ $paidMonths := $customerSalesMap.GroupByPaidMonths .ChurnedCustomers $month.Date }}
+                    {{ range $paidMonths }}
+                        <tr>
+                            <td class="col-right">{{.Name}}</td>
+                            <td class="num">{{.Value}}</td>
                         </tr>
                     {{ end }}
                     </tbody>

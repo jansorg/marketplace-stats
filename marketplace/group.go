@@ -13,6 +13,12 @@ type GroupedCustomers struct {
 	Customers Customers
 }
 
+// NumberedGroup is a name with a count
+type NumberedGroup struct {
+	Name  string
+	Value int
+}
+
 // DateGroupedSales is a number of sales, which have a group name and a date
 type DateGroupedSales struct {
 	Date     YearMonthDay

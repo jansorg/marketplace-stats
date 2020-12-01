@@ -182,8 +182,8 @@ func (s Sales) CustomerCount() int {
 	return len(s.CustomerSalesMap())
 }
 
-func (s Sales) CustomerSalesMap() map[CustomerID]*CustomerSales {
-	mapping := make(map[CustomerID]*CustomerSales)
+func (s Sales) CustomerSalesMap() CustomerSalesMap {
+	mapping := make(CustomerSalesMap)
 	for _, sale := range s {
 		value, seen := mapping[sale.Customer.ID]
 		if !seen {
