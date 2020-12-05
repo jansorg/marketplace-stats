@@ -102,6 +102,13 @@ func (s Sales) After(date time.Time) Sales {
 	})
 }
 
+func (s Sales) AtOrAfter(date time.Time) Sales {
+	reference := NewYearMonthDayByDate(date)
+	return s.FilterBy(func(sale Sale) bool {
+		return sale.Date.Equals(reference) || sale.Date.IsAfter(reference)
+	})
+}
+
 func (s Sales) ByMonthlySubscription() Sales {
 	return s.FilterBy(func(sale Sale) bool {
 		return sale.Period == MonthlySubscription

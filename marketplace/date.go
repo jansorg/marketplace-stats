@@ -9,6 +9,11 @@ func NewYearMonthDay(year, month, day int) YearMonthDay {
 	return [3]int{year, month, day}
 }
 
+func NewYearMonthDayByDate(date time.Time) YearMonthDay {
+	year, month, day := date.In(ServerTimeZone).Date()
+	return [3]int{year, int(month), day}
+}
+
 func (d YearMonthDay) String() string {
 	return d.AsDate().Format("2006-01-02")
 }

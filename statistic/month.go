@@ -81,10 +81,7 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	m.DownloadsTotal = findMonth(downloadsTotal, m.Date)
 	m.DownloadsUnique = findMonth(downloadsUnique, m.Date)
 
-	previousMonth := m.Date.AddDate(0, -1, 0)
-
 	allPreviousSales := sales.Before(m.Date)
-	previousMonthSales := sales.ByMonthlySubscription().ByMonth(previousMonth.Year(), previousMonth.Month())
 	currentMonthSales := sales.ByMonth(m.Date.Year(), m.Date.Month())
 	currentYearSales := sales.ByYear(m.Date.Year())
 
@@ -106,10 +103,7 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	// churn, no churn for first month
 	m.HasChurnRate = m.PrevMonth != nil
 	if m.HasChurnRate {
-		nextMonth := m.Date.AddDate(0, 1, 0)
-		nextMonthSales := sales.ByMonth(nextMonth.Year(), nextMonth.Month())
-
-		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(m.Date, previousMonthSales, currentMonthSales, nextMonthSales)
+		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date, marketplace.ServerTimeZone), sales, 3)
 		m.ChurnRatePercentage = m.ChurnRate * 100
 	}
 
@@ -155,37 +149,35 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	}
 }
 
-func computeMonthlyChurn(date time.Time, allPreviousMonth marketplace.Sales, allCurrentMonth marketplace.Sales, allNextMonth marketplace.Sales) (float64, []marketplace.Customer) {
-	if len(allPreviousMonth) == 0 {
+func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales, graceDays int) (float64, []marketplace.Customer) {
+	if len(allSales) == 0 {
 		return 0.0, nil
 	}
 
-	graceTimeEnd := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, marketplace.ServerTimeZone).AddDate(0, 1, 3)
-	graceTimeSales := append(allCurrentMonth, allNextMonth...).Before(graceTimeEnd)
-	graceTimeMonthlySales := graceTimeSales.ByMonthlySubscription().CustomerSalesMap()
-	graceTimeAnnualSales := graceTimeSales.ByAnnualSubscription().CustomerSalesMap()
+	// all customers of the previous month, who didn't upgrade and didn't buy in the current month
+	previousMonth := month.PreviousMonth()
+	previousMonthCustomers := allSales.ByYearMonth(previousMonth).ByMonthlySubscription().Customers()
+	previousMonthSales := allSales.ByYearMonth(previousMonth).ByMonthlySubscription().CustomerSalesMap()
 
-	// handling the active, unfinished month
+	// allow 3 days into the following month as grace time
+	graceTimeEnd := month.AsDate().AddDate(0, 1, graceDays)
+	upgradeSales := allSales.AtOrAfter(previousMonth.AsDate()).Before(month.AsDate()).ByAnnualSubscription().CustomersMap()
+	salesNew := allSales.AtOrAfter(month.AsDate()).Before(graceTimeEnd).CustomerSalesMap()
+
 	now := time.Now().In(marketplace.ServerTimeZone)
-	nowYear, nowMonth, _ := now.Date()
-	currentMonthRef := now.AddDate(0, 0, -3)
-	isActiveMonth := date.Year() == nowYear && date.Month() == nowMonth
+	isCurrentMonth := month.ContainsDate(now)
 
-	previousMonthMonthlyCustomers := allPreviousMonth.ByMonthlySubscription().CustomerSalesMap()
-
-	// collect customers, which bought in the previous, but not in current month
 	var churned []marketplace.Customer
-	for id, candidate := range previousMonthMonthlyCustomers {
-		_, ok := graceTimeMonthlySales[id]
-		_, upgraded := graceTimeAnnualSales[id]
-		paymentExpected := !isActiveMonth || candidate.LatestPurchase().AddDate(0, 1, 0).Before(currentMonthRef)
-
-		// make sure that the user did not upgrade to yearly in this month
-		if !ok && !upgraded && paymentExpected {
-			churned = append(churned, candidate.Customer)
+	for _, candidate := range previousMonthCustomers {
+		_, upgraded := upgradeSales[candidate.ID]
+		_, boughtAgain := salesNew[candidate.ID]
+		if !upgraded && !boughtAgain {
+			if !isCurrentMonth || previousMonthSales[candidate.ID].LatestPurchase().AddDate(0, 1, graceDays).Before(now) {
+				churned = append(churned, candidate)
+			}
 		}
 	}
 
-	totalUsers := len(previousMonthMonthlyCustomers)
+	totalUsers := len(previousMonthCustomers)
 	return float64(len(churned)) / float64(totalUsers), churned
 }
