@@ -57,10 +57,7 @@ func (s Sale) FeeAmount() Amount {
 
 // FeeAmountUSD is the fee in USD, which is paid to JetBrains.
 func (s Sale) FeeAmountUSD() Amount {
-	if s.Date.AsDate().Before(feeChangeDate) {
-		return s.AmountUSD * 0.05
-	}
-	return s.AmountUSD * 0.15
+	return s.AmountUSD * Amount(FeePercentage(s.Date.AsDate()))
 }
 
 func (s Sale) String() string {

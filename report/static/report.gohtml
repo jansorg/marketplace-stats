@@ -312,7 +312,7 @@
                     <th class="num">Total</th>
                     <th class="num">Fees</th>
                     <th class="num" title="Total minus fees">Paid Out</th>
-                    <th class="num" title="A rough estimate of the annual recurring revenue">ARR</th>
+                    <th class="num" title="A rough estimate of the annual recurring revenue after paying fees">ARR</th>
                     <th class="num" title="Active customers of a month">Cust.</th>
                     <th class="num" title="Monthly churned users">Churn</th>
                     <th class="num" title="Total Downloads">Downloads</th>
@@ -326,7 +326,7 @@
                         <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
-                        <td class="num">{{ .AnnualRevenueUSD.Format }} USD</td>
+                        <td class="num">{{ .AnnualRevenueUSD.PaidOut.Format }} USD</td>
                         <td class="num"
                             title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{len .ChurnedCustomers}} churned monthly users">{{ .ActiveCustomersTotal }}</td>
                         <td class="num num-percentage">
@@ -617,8 +617,8 @@
                                 title="{{formatInt .ActiveCustomersTotal}} active customers">{{growthPercentage .PrevMonth.ActiveCustomersTotal .ActiveCustomersTotal}}</td>
                             <td class="num {{if lt .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}num-plus{{else}}num-minus{{end}}"
                                 title="{{.TotalSalesUSD.Total.Format}} USD this month">{{growthPercentage .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}</td>
-                            <td class="num {{if lt .PrevMonth.AnnualRevenueUSD .AnnualRevenueUSD}}num-plus{{else}}num-minus{{end}}"
-                                title="ARR: {{.AnnualRevenueUSD.Format}} USD">{{growthPercentage .PrevMonth.AnnualRevenueUSD .AnnualRevenueUSD}}</td>
+                            <td class="num {{if lt .PrevMonth.AnnualRevenueUSD.Total .AnnualRevenueUSD.Total}}num-plus{{else}}num-minus{{end}}"
+                                title="ARR: {{.AnnualRevenueUSD.Total.Format}} USD">{{growthPercentage .PrevMonth.AnnualRevenueUSD.Total .AnnualRevenueUSD.Total}}</td>
                         </tr>
                     {{ end }}
                 {{ end }}
@@ -695,8 +695,9 @@
                         {{ $printedDate = true }}
                     {{ end }}
                 </td>
-                <td><a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a> {{if .Date.Equals $firstPurchaseDate}}
-                        <span class="badge-new">new</span>{{end}}</td>
+                <td><a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a>
+                    {{if .Date.Equals $firstPurchaseDate}}<span class="badge-new">new</span>{{end}}
+                </td>
                 <td class="num">{{if ne "USD" .Currency}}{{.Amount.Format}} {{.Currency}}{{end}}</td>
                 <td class="num">{{.AmountUSD.Format}} USD</td>
                 <td>{{.Period}}</td>

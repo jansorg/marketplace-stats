@@ -33,7 +33,7 @@ type Month struct {
 	ActiveCustomersAnnual  int
 	ActiveCustomersTotal   int
 
-	AnnualRevenueUSD marketplace.Amount
+	AnnualRevenueUSD AmountAndFee
 }
 
 func NewMonth(year int, month time.Month) *Month {
@@ -120,10 +120,8 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 
 	// projected annual revenue
 	if len(currentYearSales) > 0 {
-		for _, sale := range currentYearSales.Before(m.Date) {
-			if sale.Period == marketplace.AnnualSubscription {
-				m.AnnualRevenueUSD += sale.AmountUSD
-			}
+		for _, sale := range currentYearSales.Before(m.Date).ByAnnualSubscription() {
+			m.AnnualRevenueUSD.Total += sale.AmountUSD
 		}
 
 		// factor, if the current month isn't finished yet
@@ -136,16 +134,20 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 
 		for _, sale := range currentMonthSales {
 			if sale.Period == marketplace.MonthlySubscription {
-				m.AnnualRevenueUSD += sale.AmountUSD * 12 * marketplace.Amount(monthSalesFactor)
+				m.AnnualRevenueUSD.Total += sale.AmountUSD * 12 * marketplace.Amount(monthSalesFactor)
 			} else if sale.Period == marketplace.AnnualSubscription {
-				m.AnnualRevenueUSD += sale.AmountUSD * marketplace.Amount(monthSalesFactor)
+				m.AnnualRevenueUSD.Total += sale.AmountUSD * marketplace.Amount(monthSalesFactor)
 			}
 		}
 
-		monthsWithSales := m.Date.In(marketplace.ServerTimeZone).Month() - currentYearSales[0].Date.Month()
-		projectionFactor := 1.0 + float64(12.0-monthsWithSales)/12.0
-		// fixme don't use 80%, but 100%, for 4th year and later
-		m.AnnualRevenueUSD = m.AnnualRevenueUSD * marketplace.Amount(projectionFactor) * 0.8
+		// try to estimate for missing months of the year
+		//monthsWithSales := m.Date.In(marketplace.ServerTimeZone).Month() - currentYearSales[0].Date.Month() + 1
+		//if monthsWithSales >= 1 && monthsWithSales <= 11 {
+		//	m.AnnualRevenueUSD.Total *= marketplace.Amount(1.0 + float64(12-monthsWithSales)/12.0)
+		//}
+
+		m.AnnualRevenueUSD.Total *= 0.8 // 20% discount in 2nd and 3rd year, fixme handle 4th+ year
+		m.AnnualRevenueUSD.Fee = m.AnnualRevenueUSD.Total * marketplace.Amount(marketplace.FeePercentage(m.Date.AddDate(1, 0, 0)))
 	}
 }
 
