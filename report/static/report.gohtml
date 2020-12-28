@@ -617,8 +617,8 @@
                                 title="{{formatInt .ActiveCustomersTotal}} active customers">{{growthPercentage .PrevMonth.ActiveCustomersTotal .ActiveCustomersTotal}}</td>
                             <td class="num {{if lt .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}num-plus{{else}}num-minus{{end}}"
                                 title="{{.TotalSalesUSD.Total.Format}} USD this month">{{growthPercentage .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}</td>
-                            <td class="num {{if lt .PrevMonth.AnnualRevenueUSD.Total .AnnualRevenueUSD.Total}}num-plus{{else}}num-minus{{end}}"
-                                title="ARR: {{.AnnualRevenueUSD.Total.Format}} USD">{{growthPercentage .PrevMonth.AnnualRevenueUSD.Total .AnnualRevenueUSD.Total}}</td>
+                            <td class="num {{if lt .PrevMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}num-plus{{else}}num-minus{{end}}"
+                                title="ARR: {{.AnnualRevenueUSD.PaidOut.Format}} USD">{{growthPercentage .PrevMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}</td>
                         </tr>
                     {{ end }}
                 {{ end }}
