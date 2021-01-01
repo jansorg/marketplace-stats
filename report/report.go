@@ -52,18 +52,17 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.S
 	// iterate years
 	var years []*statistic.Year
 	if len(allSales) > 0 {
-		firstDate := allSales[0].Date.AsDate()
-		lastDate := allSales[len(allSales)-1].Date.AsDate().AddDate(0, 1, 0)
-		year := firstDate
+		year := allSales[0].Date.AsDate().Year()
+		lastYear := allSales[len(allSales)-1].Date.Year()
 
 		var previousYearStats *statistic.Year
-		for !year.After(lastDate) {
-			yearStats := statistic.NewYear(year.Year())
+		for year <= lastYear {
+			yearStats := statistic.NewYear(year)
 			yearStats.Update(previousYearStats, allSales, monthlyDownloadsTotal, monthlyDownloadsUnique)
 
 			years = append(years, yearStats)
-			year = year.AddDate(1, 0, 0)
 			previousYearStats = yearStats
+			year += 1
 		}
 	}
 

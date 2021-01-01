@@ -321,14 +321,14 @@
                 <tbody>
                 {{ range .Months }}
                     <tr {{ if .IsActiveMonth }}class="today"{{end}} id="month-{{.Date.Year}}-{{.Date.Month}}">
-                        <td class="month">{{.Name}} {{- if .IsActiveMonth }}
-                                <span class="incomplete">(incomplete)</span>{{end}}</td>
+                        <td class="month">{{.Name}} {{- if .IsActiveMonth }} <span class="incomplete">(incomplete)</span>{{end}}</td>
                         <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
                         <td class="num">{{ .AnnualRevenueUSD.PaidOut.Format }} USD</td>
-                        <td class="num"
-                            title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{len .ChurnedCustomers}} churned monthly users">{{ .ActiveCustomersTotal }}</td>
+                        <td class="num" title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{len .ChurnedCustomers}} churned monthly users">
+                            {{ .ActiveCustomersTotal }}
+                        </td>
                         <td class="num num-percentage">
                             {{ if .HasChurnRate }}
                                 <span title="{{len .ChurnedCustomers}} of {{.ChurnRateTotalCustomers}} customers,&#xA;who bought a monthly subscription in the previous month">
@@ -342,21 +342,22 @@
                                 —
                             {{ end }}
                         </td>
-                        <td class="num"
-                            title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">{{formatInt .DownloadsTotal}}</td>
+                        <td class="num" title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">
+                            {{formatInt .DownloadsTotal}}
+                        </td>
                     </tr>
                 {{ end }}
                 </tbody>
-                <tfoot>
-                <tr>
-                    <th></th>
-                    <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
-                    <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
-                    <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
-                    <th colspan="4"></th>
-                </tr>
-                </tfoot>
             {{ end }}
+            <tfoot>
+            <tr>
+                <th></th>
+                <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
+                <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
+                <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
+                <th colspan="4"></th>
+            </tr>
+            </tfoot>
         </table>
     </div>
 </div>
@@ -592,7 +593,7 @@
                 <th>Month</th>
                 <th class="num">Unique Downloads</th>
                 <th class="num">Active Customers</th>
-                <th class="num">Total Sales USD</th>
+                <th class="num">Monthly Sales (USD)</th>
                 <th class="num">Annual Recurring Revenue (ARR)</th>
             </tr>
             </thead>
