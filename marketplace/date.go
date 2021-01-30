@@ -59,3 +59,8 @@ func (d YearMonthDay) AddDays(days int) YearMonthDay {
 	y, m, day := d.AsDate().AddDate(0, 0, days).Date()
 	return NewYearMonthDay(y, int(m), day)
 }
+
+func (d YearMonthDay) Add(years, months, days int) YearMonthDay {
+	y, m, day := d.AsDate().AddDate(years, months, days).Date()
+	return NewYearMonthDay(y, int(m), day)
+}

@@ -102,7 +102,7 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	// churn, no churn for first month
 	m.HasChurnRate = m.PrevMonth != nil
 	if m.HasChurnRate {
-		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date, marketplace.ServerTimeZone), sales, 3)
+		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date), sales, 3)
 		m.ChurnRatePercentage = m.ChurnRate * 100
 	}
 
@@ -156,30 +156,58 @@ func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales
 		return 0.0, nil
 	}
 
-	// all customers of the previous month, who didn't upgrade and didn't buy in the current month
-	previousMonth := month.PreviousMonth()
-	previousMonthCustomers := allSales.ByYearMonth(previousMonth).ByMonthlySubscription().Customers()
-	previousMonthSales := allSales.ByYearMonth(previousMonth).ByMonthlySubscription().CustomerSalesMap()
-
 	// allow 3 days into the following month as grace time
-	graceTimeEnd := month.AsDate().AddDate(0, 1, graceDays)
-	upgradeSales := allSales.AtOrAfter(previousMonth.AsDate()).Before(month.AsDate()).ByAnnualSubscription().CustomersMap()
-	salesNew := allSales.AtOrAfter(month.AsDate()).Before(graceTimeEnd).CustomerSalesMap()
-
 	now := time.Now().In(marketplace.ServerTimeZone)
 	isCurrentMonth := month.ContainsDate(now)
-
+	var totalUsers int
 	var churned []marketplace.Customer
-	for _, candidate := range previousMonthCustomers {
-		_, upgraded := upgradeSales[candidate.ID]
-		_, boughtAgain := salesNew[candidate.ID]
-		if !upgraded && !boughtAgain {
-			if !isCurrentMonth || previousMonthSales[candidate.ID].LatestPurchase().AddDate(0, 1, graceDays).Before(now) {
-				churned = append(churned, candidate)
+
+	// all sales of current month + grace time
+	graceTimeEnd := month.AsDate().AddDate(0, 1, graceDays)
+	salesNew := allSales.AtOrAfter(month.AsDate()).Before(graceTimeEnd).CustomerSalesMap()
+
+	// all customers of the previous month, who didn't renew the current month
+	previousMonth := month.PreviousMonth()
+	previousMonthCustomers := allSales.ByYearMonth(previousMonth).ByMonthlySubscription().Customers()
+	if len(previousMonthCustomers) > 0 {
+		totalUsers += len(previousMonthCustomers)
+		previousMonthSales := allSales.ByYearMonth(previousMonth).ByMonthlySubscription().CustomerSalesMap()
+
+		upgradeSales := allSales.AtOrAfter(previousMonth.AsDate()).Before(month.AsDate()).ByAnnualSubscription().CustomersMap()
+		for _, candidate := range previousMonthCustomers {
+			_, upgraded := upgradeSales[candidate.ID]
+			_, boughtAgain := salesNew[candidate.ID]
+			if !upgraded && !boughtAgain {
+				// in the current month check grace time before recording as churned
+				if !isCurrentMonth || previousMonthSales[candidate.ID].LatestPurchase().AddDate(0, 1, graceDays).Before(now) {
+					churned = append(churned, candidate)
+				}
 			}
 		}
 	}
 
-	totalUsers := len(previousMonthCustomers)
+	// all customers with an annual subscription, who didn't renew in the current month
+	previousYearMonth := previousMonth.Add(-1, 0, 0)
+	lastPurchases := allSales.Before(month.AsDate()).CustomersLastPurchase()
+	// only keep sales of previous year's month, if no later purchases were made by the same customer between then and the current month
+	// this is only an estimate, because it's not possible to track subscriptions, only customers
+	expectedAnnual := allSales.ByAnnualSubscription().ByYearMonth(previousYearMonth).FilterBy(func(sale marketplace.Sale) bool {
+		lastPurchase, found := lastPurchases[sale.Customer.ID]
+		return !found || !lastPurchase.IsAfter(sale.Date)
+	})
+	if len(expectedAnnual) > 0 {
+		previousYearCustomers := expectedAnnual.Customers()
+		prevYearSales := expectedAnnual.CustomerSalesMap()
+		totalUsers += len(previousYearCustomers)
+		for _, candidate := range previousYearCustomers {
+			_, boughtAgain := salesNew[candidate.ID]
+			if !boughtAgain {
+				if !isCurrentMonth || prevYearSales[candidate.ID].LatestPurchase().AddDate(1, 0, graceDays).Before(now) {
+					churned = append(churned, candidate)
+				}
+			}
+		}
+	}
+
 	return float64(len(churned)) / float64(totalUsers), churned
 }

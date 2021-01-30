@@ -12,8 +12,8 @@ func NewYearMonth(year int, month time.Month) YearMonth {
 	return [2]int{year, int(month)}
 }
 
-func NewYearMonthByDate(date time.Time, timezone *time.Location) YearMonth {
-	year, month, _ := date.In(timezone).Date()
+func NewYearMonthByDate(date time.Time) YearMonth {
+	year, month, _ := date.In(ServerTimeZone).Date()
 	return [2]int{year, int(month)}
 }
 
@@ -51,6 +51,11 @@ func (y YearMonth) PreviousMonth() YearMonth {
 	return NewYearMonth(year, m)
 }
 
+func (y YearMonth) Add(years, months, days int) YearMonth {
+	year, m, _ := y.AsDate().AddDate(years, months, days).Date()
+	return NewYearMonth(year, m)
+}
+
 func (y YearMonth) ContainsDate(date time.Time) bool {
-	return y.Equals(NewYearMonthByDate(date, ServerTimeZone))
+	return y.Equals(NewYearMonthByDate(date))
 }

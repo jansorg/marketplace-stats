@@ -157,6 +157,7 @@ func (s Sales) CustomersMap() CustomersMap {
 	return result
 }
 
+// Customers returns a unique set of customers found in the sales
 func (s Sales) Customers() Customers {
 	var result Customers
 	for _, c := range s.CustomersMap() {
