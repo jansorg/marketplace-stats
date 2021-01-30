@@ -25,7 +25,7 @@
         }
 
         /* reset */
-        html, body, h1, h2, h3, h4, h5, p, div, table, tr, th, td, svg, img {
+        html, body, h1, h2, h3, h4, h5, p, div, table, tr, th, td, svg, img, dl, dt, dd {
             margin: 0;
             padding: 0;
             line-height: 1.4;
@@ -106,6 +106,15 @@
 
         tfoot th {
             border-top: 1px solid var(--separator-color);
+        }
+
+        dt {
+            font-weight: 800;
+        }
+
+        dd {
+            margin-left: 2rem;
+            max-width: 50%;
         }
 
         /* custom */
@@ -194,11 +203,25 @@
 
         .person {
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .today {
             color: var(--now-color);
             font-weight: 800;
+        }
+
+        .term + .term { margin-top: 1em; }
+        .term-name { font-weight: 800; }
+        .term-short { font-style: italic; font-weight: 400; padding-left: 2rem; }
+        .term p {
+            max-width:50%;
+            margin-left: 2rem;
+            line-height: 1.25;
+        }
+        .term p + p {
+            margin-top: 1em;
         }
 
         .sections {
@@ -237,6 +260,7 @@
     <a href="#section-sales">Sales</a>
     <a href="#section-growth">Growth</a>
     <a href="#section-monthly-churned">Churned Users</a>
+    <a href="#section-glossary">Glossary</a>
 </h2>
 
 {{/*<div class="sections">*/}}
@@ -321,12 +345,14 @@
                 <tbody>
                 {{ range .Months }}
                     <tr {{ if .IsActiveMonth }}class="today"{{end}} id="month-{{.Date.Year}}-{{.Date.Month}}">
-                        <td class="month">{{.Name}} {{- if .IsActiveMonth }} <span class="incomplete">(incomplete)</span>{{end}}</td>
+                        <td class="month">{{.Name}} {{- if .IsActiveMonth }}
+                                <span class="incomplete">(incomplete)</span>{{end}}</td>
                         <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
                         <td class="num">{{ .AnnualRevenueUSD.PaidOut.Format }} USD</td>
-                        <td class="num" title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{len .ChurnedCustomers}} churned monthly users">
+                        <td class="num"
+                            title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{len .ChurnedCustomers}} churned monthly users">
                             {{ .ActiveCustomersTotal }}
                         </td>
                         <td class="num num-percentage">
@@ -342,7 +368,8 @@
                                 —
                             {{ end }}
                         </td>
-                        <td class="num" title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">
+                        <td class="num"
+                            title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">
                             {{formatInt .DownloadsTotal}}
                         </td>
                     </tr>
@@ -540,7 +567,8 @@
                     <tbody>
                     {{ range .ChurnedCustomers.SortByDateMapping $lastPurchases }}
                         <tr>
-                            <td class="person"><a title="{{.Country}}" href="#customer-{{.ID}}">{{ .Name }}</a></td>
+                            <td class="person"><a title="{{.Name}} ({{.Country}})"
+                                                  href="#customer-{{.ID}}">{{ .Name }}</a></td>
                             <td>{{ .Type }}</td>
                             <td class="num">{{ $customerSalesMap.PaidMonths .ID $month.Date }}</td>
                             <td class="date">{{ index $firstPurchases .ID }}</td>
@@ -715,4 +743,38 @@
     </tbody>
 </table>
 </body>
+
+<h2 id="section-glossary">Glossary</h2>
+<div class="sections">
+    <div class="section-fit term">
+        <div class="term-name">ARR <span class="term-short">Annual Recurring Revenue</span></div>
+        <p>
+            The recurring revenue of active subscriptions, which is paid to the vendor after deducting continuity discount and
+            marketplace fees.
+        </p>
+        <p>ARR for the current, incomplete month is estimated based on the days left.</p>
+    </div>
+
+    <div class="section-fit term">
+        <div class="term-name">Churn <span class="term-short">Percentage of lost users</span></div>
+        <p>
+            Percentage of users, who did not renew an active subscription in the current month.
+        </p>
+        <p>
+            This is calculated with a grace time of 3 days. In the first year on the marketplace, this only considers
+            monthly subscriptions.
+            In the second year and later, both annual and monthly subscriptions are considered.
+        </p>
+    </div>
+
+    <div class="section-fit term">
+        <div class="term-name">Exchange Rates</div>
+        <p>
+            JetBrains' invoices are in USD. Sales in other currencies are converted to USD. The exchange rate
+            used here is provided by JetBrains. It may be different to the exchange rate used for the invoiced and paid
+            amounts.
+        </p>
+    </div>
+</div>
+
 </html>
