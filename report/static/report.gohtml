@@ -446,7 +446,7 @@
         <table class="small table-striped">
             <thead>
             <tr>
-                <th colspan="2"><h2>Subscription</h2></th>
+                <th colspan="2"><h2>Subscription Type</h2></th>
                 <th>% of Sales</th>
             </tr>
             </thead>
@@ -459,6 +459,13 @@
                 </tr>
             {{ end }}
             </tbody>
+            <tfoot>
+            <tr>
+                <th></th>
+                <th class="num">{{$report.Sales.TotalSumUSD.Format}} USD</th>
+                <th class="num">100.00%</th>
+            </tr>
+            </tfoot>
         </table>
     </div>
 
@@ -491,28 +498,6 @@
         </table>
     </div>
 
-    <div class="section section-small section-topids">
-        <table class="small table-striped">
-            <thead>
-            <tr>
-                <th colspan="2"><h2>Oldest Customers</h2></th>
-            </tr>
-            </thead>
-            <tbody class="small">
-            {{ $topCustomers := .Customers.SortByID }}
-            {{ if gt (len $topCustomers) 5 }}
-                {{ $topCustomers = slice $topCustomers 0 5 }}
-            {{ end }}
-            {{ range $topCustomers }}
-                <tr>
-                    <td>{{.ID}}</td>
-                    <td><a href="#customer-{{.ID}}">{{.Name}}</a></td>
-                </tr>
-            {{ end }}
-            </tbody>
-        </table>
-    </div>
-
     <div class="section section-small section-weekdays">
         <table class="small table-striped">
             <thead>
@@ -527,6 +512,28 @@
                     <td>{{.Name}}</td>
                     <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
                     <td class="num">{{percentage .TotalUSD $reportTotalUSD}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section section-small section-topids">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th colspan="2"><h2>Earliest JetBrains Customers</h2></th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ $topCustomers := .Customers.SortByID }}
+            {{ if gt (len $topCustomers) 10 }}
+                {{ $topCustomers = slice $topCustomers 0 10 }}
+            {{ end }}
+            {{ range $topCustomers }}
+                <tr>
+                    <td>{{.ID}}</td>
+                    <td><a href="#customer-{{.ID}}">{{.Name}}</a></td>
                 </tr>
             {{ end }}
             </tbody>
