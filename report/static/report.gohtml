@@ -17,6 +17,7 @@
         :root {
             --heading-color: #00008b;
             --now-color: #00008b;
+            --future-color: #808080;
             --link-color: #4545e6;
             --stripe-bgcolor: #f2f2f2;
             --separator-color: #808080;
@@ -212,6 +213,10 @@
             font-weight: 800;
         }
 
+        .future {
+            color: var(--future-color);
+        }
+
         .term + .term { margin-top: 1em; }
         .term-name { font-weight: 800; }
         .term-short { font-style: italic; font-weight: 400; padding-left: 2rem; }
@@ -280,7 +285,7 @@
             </thead>
             <tbody>
             {{ range .Week.Days }}
-                <tr {{ if .IsToday }}class="today"{{end}}>
+                <tr {{ if .IsToday }}class="today"{{else if .IsFuture}}class="future"{{end}} >
                     <td>{{.Name}}</td>
                     <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                 </tr>
@@ -298,10 +303,11 @@
         <table class="small table-striped">
             <thead>
             <tr>
-                <th><h2>Yearly Sales</h2></th>
+                <th><h2>Years</h2></th>
                 <th class="num">Sales</th>
                 <th class="num">Fees</th>
                 <th class="num">Paid Out</th>
+                <th class="num" title="Total Downloads (non-unique)">Downloads</th>
             </tr>
             </thead>
             <tbody>
@@ -311,6 +317,7 @@
                     <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                     <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                     <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
+                    <td class="num">{{ formatInt .DownloadsTotal }}</td>
                 </tr>
             {{ end }}
             </tbody>
@@ -320,6 +327,7 @@
                 <th class="num">{{.Sales.TotalSumUSD.Format}} USD</th>
                 <th class="num">{{.Sales.FeeSumUSD.Format}} USD</th>
                 <th class="num">{{.Sales.PaidOutUSD.Format}} USD</th>
+                <th class="num">{{ formatInt $report.PluginInfo.Downloads }}</th>
             </tr>
             </tfoot>
         </table>

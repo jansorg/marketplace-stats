@@ -46,6 +46,9 @@ func randomSales(max int, maxMonths int, customers marketplace.Customers) market
 	for i := 0; i < max; i++ {
 		refID := strconv.Itoa(i)
 		saleDate := now.AddDate(0, -rand.Intn(maxMonths), 14-int(rand.Float64()*28))
+		if saleDate.After(now) {
+			continue
+		}
 
 		subscription := marketplace.AnnualSubscription
 		if rand.Intn(100)%3 == 0 {

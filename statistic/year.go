@@ -23,6 +23,9 @@ type Year struct {
 	TotalCustomersAnnual  int
 	TotalCustomersMonthly int
 	TotalSalesUSD         AmountAndFee
+
+	DownloadsTotal  int
+	DownloadsUnique int
 }
 
 func (y *Year) Name() string {
@@ -71,6 +74,18 @@ func (y *Year) Update(previousYear *Year, sales marketplace.Sales, downloadsTota
 			y.Months = append(y.Months, month)
 			currentMonth = currentMonth.AddDate(0, 1, 0)
 			prevMonthData = month
+		}
+
+		// calculate total downloads
+		for _, d := range downloadsTotal {
+			if d.Year == y.Year {
+				y.DownloadsTotal += d.Downloads
+			}
+		}
+		for _, d := range downloadsUnique {
+			if d.Year == y.Year {
+				y.DownloadsUnique += d.Downloads
+			}
 		}
 	}
 }

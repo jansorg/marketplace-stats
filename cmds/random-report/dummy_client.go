@@ -20,11 +20,16 @@ func NewDummyClient(customerCount, salesCount, salesMonths int) *dummyClient {
 }
 
 func (d *dummyClient) GetCurrentPluginInfo() (marketplace.PluginInfo, error) {
+	var downloads int
+	for _, d := range d.downloads {
+		downloads += d.Downloads
+	}
 	return marketplace.PluginInfo{
 		ID:          42,
 		Name:        "DemoPlugin",
 		Description: "This is a demo plugin",
 		Link:        "",
+		Downloads:   downloads,
 	}, nil
 }
 

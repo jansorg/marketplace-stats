@@ -28,6 +28,10 @@ func (d *Day) IsToday() bool {
 	return year == year2 && month == month2 && day == day2
 }
 
+func (d *Day) IsFuture() bool {
+	return d.Date.In(marketplace.ServerTimeZone).After(time.Now().In(marketplace.ServerTimeZone))
+}
+
 func (d *Day) Update(sales marketplace.Sales) {
 	daySales := sales.ByDay(d.Date)
 	d.Sales = daySales
