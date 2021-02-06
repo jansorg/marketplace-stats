@@ -18,6 +18,7 @@ type Month struct {
 	Customers        int
 	CustomersAnnual  int
 	CustomersMonthly int
+	CustomersMap     marketplace.CustomersMap
 
 	// New customers, who never bought before
 	NewCustomers        int
@@ -27,6 +28,7 @@ type Month struct {
 	ChurnRate           float64
 	ChurnRatePercentage float64
 	ChurnedCustomers    marketplace.Customers
+	ChurnedCustomersMap marketplace.CustomersMap
 	HasChurnRate        bool
 
 	ActiveCustomersMonthly int
@@ -63,6 +65,25 @@ func (m *Month) DownloadsTotalRatio(downloads int) marketplace.Amount {
 	return m.TotalSalesUSD.Total / marketplace.Amount(downloads)
 }
 
+// IsChurned returns if the given customer churned in this month or in a previous month
+// If it churned before, but bought again later, then it's considered as not churned.
+// fixme this is potentially slow
+func (m *Month) IsChurned(id marketplace.CustomerID) bool {
+	if _, active := m.CustomersMap[id]; active {
+		return false
+	}
+
+	if _, churned := m.ChurnedCustomersMap[id]; churned {
+		return true
+	}
+
+	if m.PrevMonth != nil {
+		return m.PrevMonth.IsChurned(id)
+	}
+
+	return false
+}
+
 func findMonth(downloads []marketplace.DownloadMonthly, yearMonth time.Time) int {
 	y, m, _ := yearMonth.Date()
 	for _, d := range downloads {
@@ -85,7 +106,8 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	currentMonthSales := sales.ByMonth(m.Date.Year(), m.Date.Month())
 
 	// Basics
-	m.Customers = len(currentMonthSales.CustomersMap())
+	m.CustomersMap = currentMonthSales.CustomersMap()
+	m.Customers = len(m.CustomersMap)
 	m.CustomersAnnual = len(currentMonthSales.ByAnnualSubscription().CustomersMap())
 	m.CustomersMonthly = len(currentMonthSales.ByMonthlySubscription().CustomersMap())
 
@@ -104,6 +126,7 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	if m.HasChurnRate {
 		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date), sales, 3)
 		m.ChurnRatePercentage = m.ChurnRate * 100
+		m.ChurnedCustomersMap = m.ChurnedCustomers.AsMap()
 	}
 
 	// Active customers

@@ -162,3 +162,14 @@ func (r HTMLReport) Generate() (string, error) {
 	}
 	return w.String(), nil
 }
+
+func (r HTMLReport) LatestMonth() *statistic.Month {
+	if len(r.Years) == 0 {
+		return nil
+	}
+	months := r.Years[len(r.Years)-1].Months
+	if len(months) == 0 {
+		return nil
+	}
+	return months[len(months)-1]
+}

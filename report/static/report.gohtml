@@ -3,6 +3,7 @@
 {{ $firstPurchases := .Sales.CustomersFirstPurchase }}
 {{ $lastPurchases := .Sales.CustomersLastPurchase }}
 {{ $customerSalesMap := .Sales.CustomerSalesMap }}
+{{ $latestMonth := .LatestMonth }}
 
 <html lang="en">
 <head>
@@ -162,13 +163,36 @@
             font-style: italic;
         }
 
-        .badge-new {
+        .badge-new, .badge-churned {
             font-size: .8em;
             line-height: 1.0;
-            background-color: #e6b8b8;
             border-radius: 3px;
             padding: 1px 3px;
             display: inline-block;
+            vertical-align: baseline;
+        }
+
+        .badge-new {
+            background-color: #e6b8b8;
+            color: #000;
+        }
+
+        .badge-churned {
+            background-color: #cc0000;
+            color: #fff;
+        }
+
+        .filter-hidden {
+            display: none;
+        }
+
+        /* display duplicate dates in rows of filtered tables */
+        .date-hidden {
+            display: none;
+        }
+
+        .filter-visible .date-hidden {
+            display: inline;
         }
 
         .desc {
@@ -217,14 +241,26 @@
             color: var(--future-color);
         }
 
-        .term + .term { margin-top: 1em; }
-        .term-name { font-weight: 800; }
-        .term-short { font-style: italic; font-weight: 400; padding-left: 2rem; }
+        .term + .term {
+            margin-top: 1em;
+        }
+
+        .term-name {
+            font-weight: 800;
+        }
+
+        .term-short {
+            font-style: italic;
+            font-weight: 400;
+            padding-left: 2rem;
+        }
+
         .term p {
-            max-width:50%;
+            max-width: 50%;
             margin-left: 2rem;
             line-height: 1.25;
         }
+
         .term p + p {
             margin-top: 1em;
         }
@@ -285,7 +321,7 @@
             </thead>
             <tbody>
             {{ range .Week.Days }}
-                <tr {{ if .IsToday }}class="today"{{else if .IsFuture}}class="future"{{end}} >
+                <tr {{ if .IsToday }}class="today" {{else if .IsFuture}}class="future"{{end}} >
                     <td>{{.Name}}</td>
                     <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                 </tr>
@@ -695,16 +731,23 @@
                 <th>Name</th>
                 <th>Country</th>
                 <th>Type</th>
+                <th>First Purchase</th>
             </tr>
             </thead>
             <tbody class="small">
             {{ range .CustomerSales }}
                 <tr id="customer-{{.Customer.ID}}">
                     <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
-                    <td class="num">{{.Customer.ID}}</td>
-                    <td>{{.Customer.Name}}</td>
+                    <td class="num"><a href="javascript:setSalesTableFilter('{{.Customer.ID}}')">{{.Customer.ID}}</a></td>
+                    <td>
+                        {{.Customer.Name}}
+                        {{ if and $latestMonth ($latestMonth.IsChurned .Customer.ID) }}
+                            <span class="badge-churned">churned</span>
+                        {{end}}
+                    </td>
                     <td>{{.Customer.Country}}</td>
                     <td>{{.Customer.Type}}</td>
+                    <td>{{ index $firstPurchases .Customer.ID }}</td>
                 </tr>
             {{ end }}
             </tbody>
@@ -713,10 +756,16 @@
 </div>
 
 <h2 id="section-sales">Sales</h2>
+<div class="small">
+    <label for="filter-sales-customer">
+        Filter: <input type="text" id="filter-sales-customer" class="filter" placeholder="Customer ID">
+    </label>
+</div>
 <table class="section-wide table-striped small" id="sales-table">
     <thead>
     <tr>
         <th class="date"><h3>Date</h3></th>
+        <th class="num"><h3>ID</h3></th>
         <th><h3>Customer</h3></th>
         <th class="num"><h3>Amount</h3></th>
         <th class="num"><h3>Amount USD</h3></th>
@@ -730,7 +779,7 @@
     {{ range $report.Sales.GroupByDate true }}
         {{ if or (ne $lastYear .Date.Year) (ne $lastMonth .Date.Month) }}
             <tr>
-                <th colspan="6" class="subheading">
+                <th colspan="7" class="subheading">
                     <h3><a href="#month-{{.Date.Year}}-{{.Date.Month}}">{{.Date.Month}} {{.Date.Year}}</a></h3>
                 </th>
                 {{ $lastYear = .Date.Year }}
@@ -742,15 +791,19 @@
         {{ range .Sales }}
             {{ $firstPurchaseDate := index $firstPurchases .Customer.ID }}
 
-            <tr>
+            <tr data-customer-id="{{.Customer.ID}}">
                 <td class="date">
                     {{ $newDate := .Date.String }}
                     {{ if not $printedDate }}
                         {{ $newDate }}
                         {{ $printedDate = true }}
+                    {{ else }}
+                        <span class="date-hidden">{{ $newDate }}</span>
                     {{ end }}
                 </td>
-                <td><a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a>
+                <td class="num"><a href="javascript:setSalesTableFilter('{{.Customer.ID}}')">{{.Customer.ID}}</a></td>
+                <td>
+                    <a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a>
                     {{if .Date.Equals $firstPurchaseDate}}<span class="badge-new">new</span>{{end}}
                 </td>
                 <td class="num">{{if ne "USD" .Currency}}{{.Amount.Format}} {{.Currency}}{{end}}</td>
@@ -769,21 +822,28 @@
     <div class="section-fit term">
         <div class="term-name">ARR <span class="term-short">Annual Recurring Revenue</span></div>
         <p>
-            The recurring revenue of active subscriptions, which is paid to the vendor after deducting continuity discount and
-            marketplace fees.
+            The recurring revenue of active subscriptions, which is paid to the vendor after deducting continuity
+            discount and marketplace fees.
         </p>
         <p>ARR for the current, incomplete month is estimated based on the days left.</p>
+        <p><em>This may be inaccurate.</em> Prorated purchases are currently not tracked reliably, because JetBrains
+            data
+            isn't providing this.
+        </p>
     </div>
 
     <div class="section-fit term">
         <div class="term-name">Churn <span class="term-short">Percentage of lost users</span></div>
-        <p>
-            Percentage of users, who did not renew an active subscription in the current month.
-        </p>
+        <p>Percentage of users, who did not renew an active subscription in the current month.</p>
         <p>
             This is calculated with a grace time of 3 days. In the first year on the marketplace, this only considers
             monthly subscriptions.
             In the second year and later, both annual and monthly subscriptions are considered.
+        </p>
+        <p><em>This may be inaccurate.</em>
+            Customers with multiple subscriptions are currently not tracked accurately.
+            JetBrains' data contains purchases of customers. There's no reliable way to identify individual
+            subscriptions.
         </p>
     </div>
 
@@ -796,5 +856,40 @@
         </p>
     </div>
 </div>
+
+<script type="application/javascript">
+  document.getElementById("filter-sales-customer").addEventListener("change", e => {
+    filterSalesTable(e.target.value)
+    return false
+  })
+  document.getElementById("filter-sales-customer").addEventListener("keyup", e => filterSalesTable(e.target.value))
+
+  function setSalesTableFilter(id) {
+    filterSalesTable(id)
+    location.hash = "#section-sales"
+  }
+
+  function filterSalesTable(id) {
+    const input = document.getElementById("filter-sales-customer")
+    if (input.value !== id) {
+      input.value = id
+    }
+
+    // first, show all again
+    document.querySelectorAll("#sales-table tr").forEach(e => {
+      e.classList.remove("filter-hidden")
+      e.classList.remove("filter-visible")
+    })
+
+    if (id !== "") {
+      document.querySelectorAll(`#sales-table tbody tr:not(tr[data-customer-id="${id}"])`).forEach(row => {
+        row.classList.add("filter-hidden")
+      })
+      document.querySelectorAll(`#sales-table tbody tr[data-customer-id="${id}"]`).forEach(row => {
+        row.classList.add("filter-visible")
+      })
+    }
+  }
+</script>
 
 </html>

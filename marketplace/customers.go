@@ -45,3 +45,11 @@ func (c Customers) GroupByCountry() []GroupedCustomers {
 	})
 	return result
 }
+
+func (c Customers) AsMap() CustomersMap {
+	result := make(CustomersMap)
+	for _, e := range c {
+		result[e.ID] = e
+	}
+	return result
+}
