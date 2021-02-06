@@ -9,6 +9,15 @@
 <head>
     <title>{{$report.PluginInfo.Name}} Sales Report</title>
     <meta charset="UTF-8">
+    <style type="text/css" media="print">
+        .noprint {
+            display: none;
+        }
+
+        .noprintlink {
+            color: var(--text-color);
+        }
+    </style>
     <style type="text/css">
         /* Default font */
         @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&display=swap');
@@ -20,10 +29,12 @@
             --now-color: #00008b;
             --future-color: #808080;
             --link-color: #4545e6;
+            --link-color-active: #ff0000;
             --stripe-bgcolor: #f2f2f2;
             --separator-color: #808080;
             --positive-color: #119e39;
             --negative-color: #ff0000;
+            --text-color: #000;
         }
 
         /* reset */
@@ -68,6 +79,10 @@
         a, a:visited {
             text-decoration: none;
             color: var(--link-color);
+        }
+
+        a:hover {
+            color: var(--link-color-active);
         }
 
         svg {
@@ -618,8 +633,11 @@
                     <tbody>
                     {{ range .ChurnedCustomers.SortByDateMapping $lastPurchases }}
                         <tr>
-                            <td class="person"><a title="{{.Name}} ({{.Country}})"
-                                                  href="#customer-{{.ID}}">{{ .Name }}</a></td>
+                            <td class="person" title="{{.Name}} ({{.Country}})">
+                                {{.Name}}
+                                <a class="noprint" href="#customer-{{.ID}}" title="Total sales">🌏</a>
+                                <a class="noprint" href="javascript:setSalesTableFilter('{{.ID}}')" title="Individual sales">🔍</a>
+                            </td>
                             <td>{{ .Type }}</td>
                             <td class="num">{{ $customerSalesMap.PaidMonths .ID $month.Date }}</td>
                             <td class="date">{{ index $firstPurchases .ID }}</td>
@@ -738,12 +756,14 @@
             {{ range .CustomerSales }}
                 <tr id="customer-{{.Customer.ID}}">
                     <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
-                    <td class="num"><a href="javascript:setSalesTableFilter('{{.Customer.ID}}')">{{.Customer.ID}}</a></td>
+                    <td class="num"><a class="noprintlink"
+                                       href="javascript:setSalesTableFilter('{{.Customer.ID}}')">{{.Customer.ID}}</a>
+                    </td>
                     <td>
                         {{.Customer.Name}}
                         {{ if and $latestMonth ($latestMonth.IsChurned .Customer.ID) }}
                             <span class="badge-churned">churned</span>
-                        {{end}}
+                        {{ end }}
                     </td>
                     <td>{{.Customer.Country}}</td>
                     <td>{{.Customer.Type}}</td>
@@ -805,6 +825,11 @@
                 <td>
                     <a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a>
                     {{if .Date.Equals $firstPurchaseDate}}<span class="badge-new">new</span>{{end}}
+                    {{ if and $latestMonth ($latestMonth.IsChurned .Customer.ID) }}
+                        {{ if eq .Date (index $lastPurchases .Customer.ID) }}
+                            <span class="badge-churned">churned</span>
+                        {{end}}
+                    {{end}}
                 </td>
                 <td class="num">{{if ne "USD" .Currency}}{{.Amount.Format}} {{.Currency}}{{end}}</td>
                 <td class="num">{{.AmountUSD.Format}} USD</td>
