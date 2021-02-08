@@ -749,7 +749,7 @@
                 <th>Name</th>
                 <th>Country</th>
                 <th>Type</th>
-                <th>First Purchase</th>
+                <th class="date">First Purchase</th>
             </tr>
             </thead>
             <tbody class="small">
@@ -767,7 +767,7 @@
                     </td>
                     <td>{{.Customer.Country}}</td>
                     <td>{{.Customer.Type}}</td>
-                    <td>{{ index $firstPurchases .Customer.ID }}</td>
+                    <td class="date">{{ index $firstPurchases .Customer.ID }}</td>
                 </tr>
             {{ end }}
             </tbody>
@@ -776,9 +776,9 @@
 </div>
 
 <h2 id="section-sales">Sales</h2>
-<div class="small">
+<div class="small noprint">
     <label for="filter-sales-customer">
-        Filter: <input type="text" id="filter-sales-customer" class="filter" placeholder="Customer ID">
+        Filter: <input type="text" id="filter-sales-customer" class="filter" placeholder="Customer ID" size="8">
     </label>
 </div>
 <table class="section-wide table-striped small" id="sales-table">
