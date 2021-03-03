@@ -13,6 +13,7 @@ type Month struct {
 	DownloadsTotal  int
 	DownloadsUnique int
 	TotalSalesUSD   AmountAndFee
+	NewSalesUSD     AmountAndFee
 
 	// Customers who bought in the current month
 	Customers        int
@@ -112,14 +113,19 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	m.CustomersMonthly = len(currentMonthSales.ByMonthlySubscription().CustomersMap())
 
 	// New customers
-	newAnnualCustomersMap := currentMonthSales.ByNewCustomers(allPreviousSales, m.Date).ByAnnualSubscription().CustomersMap()
+	newCustomerSales := currentMonthSales.ByNewCustomers(allPreviousSales, m.Date)
+	newAnnualCustomersMap := newCustomerSales.ByAnnualSubscription().CustomersMap()
+	newMonthlyCustomersMap := newCustomerSales.ByMonthlySubscription().CustomersMap()
 	m.NewCustomersAnnual = len(newAnnualCustomersMap)
-	m.NewCustomersMonthly = len(currentMonthSales.ByNewCustomers(allPreviousSales, m.Date).ByMonthlySubscription().CustomersMap().Without(newAnnualCustomersMap))
+	m.NewCustomersMonthly = len(newMonthlyCustomersMap.Without(newAnnualCustomersMap))
 	m.NewCustomers = m.NewCustomersMonthly + m.NewCustomersAnnual
 
 	// Sales
 	m.TotalSalesUSD.Total = currentMonthSales.TotalSumUSD()
 	m.TotalSalesUSD.Fee = currentMonthSales.FeeSumUSD()
+
+	m.NewSalesUSD.Total = newCustomerSales.TotalSumUSD()
+	m.NewSalesUSD.Fee = newCustomerSales.FeeSumUSD()
 
 	// churn, no churn for first month
 	m.HasChurnRate = m.PrevMonth != nil

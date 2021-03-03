@@ -392,6 +392,7 @@
                 <thead>
                 <tr>
                     <th><h2>{{.Year}}</h2></th>
+                    <th class="num" title="Total of sales to new customers">New</th>
                     <th class="num">Total</th>
                     <th class="num">Fees</th>
                     <th class="num" title="Total minus fees">Paid Out</th>
@@ -406,6 +407,7 @@
                     <tr {{ if .IsActiveMonth }}class="today"{{end}} id="month-{{.Date.Year}}-{{.Date.Month}}">
                         <td class="month">{{.Name}} {{- if .IsActiveMonth }}
                                 <span class="incomplete">(incomplete)</span>{{end}}</td>
+                        <td class="num">{{ .NewSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
@@ -437,7 +439,7 @@
             {{ end }}
             <tfoot>
             <tr>
-                <th></th>
+                <th colspan="2"></th>
                 <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
                 <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
                 <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
@@ -703,6 +705,7 @@
                 <th class="num">Active Customers</th>
                 <th class="num">Monthly Sales (USD)</th>
                 <th class="num">Annual Recurring Revenue (ARR)</th>
+                <th class="num">New Sales</th>
             </tr>
             </thead>
             <tbody>
@@ -711,6 +714,7 @@
                     {{ if not .PrevMonth }}
                         <tr id="growth-{{.Name}}">
                             <td>{{.Name}}</td>
+                            <td class="num">—</td>
                             <td class="num">—</td>
                             <td class="num">—</td>
                             <td class="num">—</td>
@@ -728,6 +732,8 @@
                                 title="{{.TotalSalesUSD.Total.Format}} USD this month">{{growthPercentage .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}</td>
                             <td class="num {{if lt .PrevMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}num-plus{{else}}num-minus{{end}}"
                                 title="ARR: {{.AnnualRevenueUSD.PaidOut.Format}} USD">{{growthPercentage .PrevMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}</td>
+                            <td class="num {{if lt .PrevMonth.NewSalesUSD.Total .NewSalesUSD.Total}}num-plus{{else}}num-minus{{end}}"
+                                title="Sales to new customer">{{growthPercentage .PrevMonth.NewSalesUSD.Total .NewSalesUSD.Total}}</td>
                         </tr>
                     {{ end }}
                 {{ end }}
