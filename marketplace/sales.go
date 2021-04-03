@@ -9,6 +9,16 @@ import (
 // Subscription is either an Annual or a Monthly subscription
 type Subscription string
 
+func (s Subscription) Abbrev() string {
+	if s == AnnualSubscription {
+		return "y"
+	}
+	if s == MonthlySubscription {
+		return "m"
+	}
+	return "?"
+}
+
 // AccountType is either a Personal or an Organization account
 type AccountType string
 

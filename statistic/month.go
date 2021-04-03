@@ -28,8 +28,7 @@ type Month struct {
 
 	ChurnRate           float64
 	ChurnRatePercentage float64
-	ChurnedCustomers    marketplace.Customers
-	ChurnedCustomersMap marketplace.CustomersMap
+	ChurnedCustomers    marketplace.ChurnedCustomers
 	HasChurnRate        bool
 
 	ActiveCustomersMonthly int
@@ -74,7 +73,7 @@ func (m *Month) IsChurned(id marketplace.CustomerID) bool {
 		return false
 	}
 
-	if _, churned := m.ChurnedCustomersMap[id]; churned {
+	if m.ChurnedCustomers.Contains(id) {
 		return true
 	}
 
@@ -132,7 +131,6 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	if m.HasChurnRate {
 		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date), sales, 3)
 		m.ChurnRatePercentage = m.ChurnRate * 100
-		m.ChurnedCustomersMap = m.ChurnedCustomers.AsMap()
 	}
 
 	// Active customers
@@ -180,7 +178,7 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	m.AnnualRevenueUSD.Fee = m.AnnualRevenueUSD.Total * marketplace.Amount(marketplace.FeePercentage(m.Date.AddDate(1, 0, 0)))
 }
 
-func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales, graceDays int) (float64, []marketplace.Customer) {
+func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales, graceDays int) (float64, marketplace.ChurnedCustomers) {
 	if len(allSales) == 0 {
 		return 0.0, nil
 	}
@@ -189,7 +187,7 @@ func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales
 	now := time.Now().In(marketplace.ServerTimeZone)
 	isCurrentMonth := month.ContainsDate(now)
 	var totalUsers int
-	var churned []marketplace.Customer
+	var churned marketplace.ChurnedCustomers
 
 	// all sales of current month + grace time
 	graceTimeEnd := month.AsDate().AddDate(0, 1, graceDays)
@@ -209,7 +207,11 @@ func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales
 			if !upgraded && !boughtAgain {
 				// in the current month check grace time before recording as churned
 				if !isCurrentMonth || previousMonthSales[candidate.ID].LatestPurchase().AddDate(0, 1, graceDays).Before(now) {
-					churned = append(churned, candidate)
+					churned = append(churned, marketplace.ChurnedCustomer{
+						Customer:     candidate,
+						LastPurchase: marketplace.NewYearMonthDayByDate(previousMonthSales[candidate.ID].LatestPurchase()),
+						Subscription: marketplace.MonthlySubscription,
+					})
 				}
 			}
 		}
@@ -232,7 +234,11 @@ func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales
 			_, boughtAgain := salesNew[candidate.ID]
 			if !boughtAgain {
 				if !isCurrentMonth || prevYearSales[candidate.ID].LatestPurchase().AddDate(1, 0, graceDays).Before(now) {
-					churned = append(churned, candidate)
+					churned = append(churned, marketplace.ChurnedCustomer{
+						Customer:     candidate,
+						LastPurchase: lastPurchases[candidate.ID],
+						Subscription: marketplace.AnnualSubscription,
+					})
 				}
 			}
 		}
