@@ -53,6 +53,26 @@ func (c ChurnedCustomers) Customers() Customers {
 	return customers
 }
 
+func (c ChurnedCustomers) CountMonthly() int {
+	var count int
+	for _, e := range c {
+		if e.Subscription == MonthlySubscription {
+			count++
+		}
+	}
+	return count
+}
+
+func (c ChurnedCustomers) CountAnnual() int {
+	var count int
+	for _, e := range c {
+		if e.Subscription == AnnualSubscription {
+			count++
+		}
+	}
+	return count
+}
+
 func (c ChurnedCustomers) GroupByPaidDuration(first CustomerDateMap) []NumberedGroup {
 	mapping := make(map[string]int)
 	for _, e := range c {

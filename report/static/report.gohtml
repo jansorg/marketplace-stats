@@ -412,8 +412,7 @@
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
                         <td class="num">{{ .AnnualRevenueUSD.PaidOut.Format }} USD</td>
-                        <td class="num"
-                            title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{len .ChurnedCustomers}} churned monthly users">
+                        <td class="num" title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{.ChurnedCustomers.CountAnnual}} churned annual users&#xA;{{.ChurnedCustomers.CountMonthly}} churned monthly users">
                             {{ .ActiveCustomersTotal }}
                         </td>
                         <td class="num num-percentage">
