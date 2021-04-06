@@ -90,19 +90,16 @@ func (c ChurnedCustomers) GroupByPaidDuration(first CustomerDateMap) []NumberedG
 	sort.Slice(groups, func(i, j int) bool {
 		a := groups[i]
 		b := groups[j]
-		if a.Name == b.Name {
-			return a.Value > b.Value
-		}
 
 		paidA, _ := strconv.Atoi(a.Name[0 : len(a.Name)-1])
 		paidB, _ := strconv.Atoi(b.Name[0 : len(b.Name)-1])
-		if a.Name[len(a.Name)-1] == 'a' {
+		if a.Name[len(a.Name)-1] == 'y' {
 			paidA *= 12
 		}
-		if b.Name[len(b.Name)-1] == 'a' {
+		if b.Name[len(b.Name)-1] == 'y' {
 			paidB *= 12
 		}
-		return paidA > paidB
+		return paidA <= paidB
 	})
 	return groups
 }
