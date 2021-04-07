@@ -129,7 +129,8 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	// churn, no churn for first month
 	m.HasChurnRate = m.PrevMonth != nil
 	if m.HasChurnRate {
-		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date), sales, 3)
+		// JetBrains mentioned 7 days as grace time for expired licenses
+		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date), sales, 7)
 		m.ChurnRatePercentage = m.ChurnRate * 100
 	}
 
