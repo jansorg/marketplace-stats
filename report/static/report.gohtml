@@ -35,6 +35,7 @@
             --positive-color: #119e39;
             --negative-color: #ff0000;
             --text-color: #000;
+            --text-color-disabled: #808080;
         }
 
         /* reset */
@@ -172,6 +173,10 @@
 
         .tiny {
             font-size: .7rem;
+        }
+
+        .disabled {
+            color:var(--text-color-disabled);
         }
 
         .desc, .incomplete {
@@ -835,6 +840,7 @@
                             <span class="badge-churned">churned</span>
                         {{end}}
                     {{end}}
+                    <span class="tiny disabled">({{.ReferenceID}})</span>
                 </td>
                 <td class="num">{{if ne "USD" .Currency}}{{.Amount.Format}} {{.Currency}}{{end}}</td>
                 <td class="num">{{.AmountUSD.Format}} USD</td>
