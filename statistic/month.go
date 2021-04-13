@@ -26,10 +26,9 @@ type Month struct {
 	NewCustomersAnnual  int
 	NewCustomersMonthly int
 
-	ChurnRate           float64
-	ChurnRatePercentage float64
-	ChurnedCustomers    marketplace.ChurnedCustomers
-	HasChurnRate        bool
+	HasChurnRate         bool
+	ChurnActiveCustomers int
+	ChurnedCustomers     marketplace.ChurnedCustomers
 
 	ActiveCustomersMonthly int
 	ActiveCustomersAnnual  int
@@ -57,8 +56,17 @@ func (m *Month) IsActiveMonth() bool {
 	return m.Date.Year() == now.Year() && m.Date.Month() == now.Month()
 }
 
-func (m *Month) ChurnRateTotalCustomers() int {
-	return m.PrevMonth.ActiveCustomersMonthly
+func (m *Month) PreviousYearMonth() *Month {
+	month := m
+	i := 12
+	for i > 1 {
+		month = month.PrevMonth
+		if month == nil {
+			return nil
+		}
+		i--
+	}
+	return month
 }
 
 func (m *Month) DownloadsTotalRatio(downloads int) marketplace.Amount {
@@ -82,6 +90,10 @@ func (m *Month) IsChurned(id marketplace.CustomerID) bool {
 	}
 
 	return false
+}
+
+func (m *Month) ChurnRatePercentage() float64 {
+	return float64(len(m.ChurnedCustomers)) / float64(m.ChurnActiveCustomers) * 100
 }
 
 func findMonth(downloads []marketplace.DownloadMonthly, yearMonth time.Time) int {
@@ -130,14 +142,13 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	m.HasChurnRate = m.PrevMonth != nil
 	if m.HasChurnRate {
 		// JetBrains mentioned 7 days as grace time for expired licenses
-		m.ChurnRate, m.ChurnedCustomers = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date), sales, 7)
-		m.ChurnRatePercentage = m.ChurnRate * 100
+		m.ChurnActiveCustomers, m.ChurnedCustomers = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date), sales, 7)
 	}
 
 	// Active customers
 	if previousMonthData != nil {
-		m.ActiveCustomersMonthly = previousMonthData.ActiveCustomersMonthly - len(m.ChurnedCustomers) + m.NewCustomersMonthly
-		m.ActiveCustomersAnnual = previousMonthData.ActiveCustomersAnnual + m.NewCustomersAnnual
+		m.ActiveCustomersMonthly = previousMonthData.ActiveCustomersMonthly - m.ChurnedCustomers.CountMonthly() + m.NewCustomersMonthly
+		m.ActiveCustomersAnnual = previousMonthData.ActiveCustomersAnnual - m.ChurnedCustomers.CountAnnual() + m.NewCustomersAnnual
 		m.ActiveCustomersTotal = previousMonthData.ActiveCustomersTotal - len(m.ChurnedCustomers) + m.NewCustomers
 	} else {
 		m.ActiveCustomersMonthly = m.NewCustomersMonthly
@@ -179,7 +190,7 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	m.AnnualRevenueUSD.Fee = m.AnnualRevenueUSD.Total * marketplace.Amount(marketplace.FeePercentage(m.Date.AddDate(1, 0, 0)))
 }
 
-func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales, graceDays int) (float64, marketplace.ChurnedCustomers) {
+func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales, graceDays int) (int, marketplace.ChurnedCustomers) {
 	if len(allSales) == 0 {
 		return 0.0, nil
 	}
@@ -245,5 +256,5 @@ func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales
 		}
 	}
 
-	return float64(len(churned)) / float64(totalUsers), churned
+	return totalUsers, churned
 }

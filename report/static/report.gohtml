@@ -422,7 +422,7 @@
                         </td>
                         <td class="num num-percentage">
                             {{ if .HasChurnRate }}
-                                <span title="{{len .ChurnedCustomers}} of {{.ChurnRateTotalCustomers}} customers,&#xA;who bought a monthly subscription in the previous month">
+                                <span title="{{len .ChurnedCustomers}} of {{.ChurnActiveCustomers}} customers didn't renew their subscription">
                             {{ if gt (len .ChurnedCustomers) 0 }}
                                 <a href="#churn-{{ .Name }}">{{- printf "%.2f" .ChurnRatePercentage }}%</a>
                             {{ else }}
@@ -862,9 +862,8 @@
             discount and marketplace fees.
         </p>
         <p>ARR for the current, incomplete month is estimated based on the days left.</p>
-        <p><em>This may be inaccurate.</em> Prorated purchases are currently not tracked reliably, because JetBrains
-            data
-            isn't providing this.
+        <p><em>This may be inaccurate.</em> Prorated purchases are currently not tracked reliably,
+          because JetBrains data isn't providing this.
         </p>
     </div>
 
@@ -872,9 +871,8 @@
         <div class="term-name">Churn <span class="term-short">Percentage of lost users</span></div>
         <p>Percentage of users, who did not renew an active subscription in the current month.</p>
         <p>
-            This is calculated with a grace time of 3 days. In the first year on the marketplace, this only considers
-            monthly subscriptions.
-            In the second year and later, both annual and monthly subscriptions are considered.
+            This is calculated with a grace time of 7 days. In the first year on the marketplace, this only considers
+            monthly subscriptions. In the second year and later, both annual and monthly subscriptions are considered.
         </p>
         <p><em>This may be inaccurate.</em>
             Customers with multiple subscriptions are currently not tracked accurately.
