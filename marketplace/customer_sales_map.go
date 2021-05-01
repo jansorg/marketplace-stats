@@ -9,6 +9,14 @@ import (
 
 type CustomerSalesMap map[CustomerID]*CustomerSales
 
+func (m CustomerSalesMap) TotalSales(id CustomerID) Amount {
+	data, ok := m[id]
+	if !ok {
+		return 0
+	}
+	return data.TotalUSD
+}
+
 func (m CustomerSalesMap) PaidMonths(id CustomerID, before time.Time) int {
 	data, ok := m[id]
 	if !ok {

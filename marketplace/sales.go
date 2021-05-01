@@ -67,7 +67,7 @@ func (s Sales) ByYearMonthDay(day YearMonthDay) Sales {
 	})
 }
 
-// ByYearMonth returns a new Sales slice, which contains all items bought at this particular day
+// ByYearMonth returns a new Sales slice, which contains all items bought in the particular month
 func (s Sales) ByYearMonth(month YearMonth) Sales {
 	return s.FilterBy(func(sale Sale) bool {
 		date := sale.Date

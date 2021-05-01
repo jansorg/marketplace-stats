@@ -238,6 +238,10 @@
             text-align: right;
         }
 
+        th.col-left, td.col-left {
+            text-align: left;
+        }
+
         .num-plus {
             color: var(--positive-color);
         }
@@ -324,12 +328,6 @@
     <a href="#section-glossary">Glossary</a>
 </h2>
 
-{{/*<div class="sections">*/}}
-{{/*    <div class="section section-chart section-centered">*/}}
-{{/*        {{ $report.Timeline.DrawSVG }}*/}}
-{{/*    </div>*/}}
-{{/*</div>*/}}
-
 <div class="sections">
     <div class="section section-currentweek section-small">
         <table class="small table-striped">
@@ -403,7 +401,8 @@
                     <th class="num" title="Total minus fees">Paid Out</th>
                     <th class="num" title="A rough estimate of the annual recurring revenue after paying fees">ARR</th>
                     <th class="num" title="Active customers of a month">Cust.</th>
-                    <th class="num" title="Monthly churned users">Churn</th>
+                    <th class="num" title="Churned annual subscribers">Annual</th>
+                    <th class="num" title="Churned monthly subscribers">Monthly</th>
                     <th class="num" title="Total Downloads">Downloads</th>
                 </tr>
                 </thead>
@@ -417,24 +416,29 @@
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
                         <td class="num">{{ .AnnualRevenueUSD.PaidOut.Format }} USD</td>
-                        <td class="num" title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{.ChurnedCustomers.CountAnnual}} churned annual users&#xA;{{.ChurnedCustomers.CountMonthly}} churned monthly users">
+                        <td class="num" title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{.ChurnedAnnual.Count}} churned annual users&#xA;{{.ChurnedMonthly.Count}} churned monthly users">
                             {{ .ActiveCustomersTotal }}
                         </td>
                         <td class="num num-percentage">
-                            {{ if .HasChurnRate }}
-                                <span title="{{len .ChurnedCustomers}} of {{.ChurnActiveCustomers}} customers didn't renew their subscription">
-                            {{ if gt (len .ChurnedCustomers) 0 }}
-                                <a href="#churn-{{ .Name }}">{{- printf "%.2f" .ChurnRatePercentage }}%</a>
-                            {{ else }}
-                                —
-                            {{ end }}
+                            {{ $allAnnualChurned := .AllAnnualChurnedYear}}
+                            {{ if and .HasAnnualChurnRate $allAnnualChurned.IsNotEmpty }}
+                                <span title="{{$allAnnualChurned.Count}} of {{.ChurnedAnnual.ActiveUserCount}} annual subscribers did not renew">
+                                <a href="#churn-{{ .Name }}">{{- printf "%.2f" $allAnnualChurned.ChurnRatePercentage }}%</a>
                             </span>
                             {{ else }}
                                 —
                             {{ end }}
                         </td>
-                        <td class="num"
-                            title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">
+                        <td class="num num-percentage">
+                            {{ if and .HasMonthlyChurnRate .ChurnedMonthly.IsNotEmpty }}
+                                <span title="{{.ChurnedMonthly.CountMonthly}} of {{.ChurnedMonthly.ActiveUserCount}} monthly subscribers did not renew">
+                                <a href="#churn-{{ .Name }}">{{- printf "%.2f" .ChurnedMonthly.ChurnRatePercentage }}%</a>
+                            </span>
+                            {{ else }}
+                                —
+                            {{ end }}
+                        </td>
+                        <td class="num" title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">
                             {{formatInt .DownloadsTotal}}
                         </td>
                     </tr>
@@ -447,7 +451,7 @@
                 <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
                 <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
                 <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
-                <th colspan="4"></th>
+                <th colspan="5"></th>
             </tr>
             </tfoot>
         </table>
@@ -611,7 +615,8 @@
 {{ range $report.Years }}
     {{ range .Months }}
         {{ $month := . }}
-        {{ if eq (len .ChurnedCustomers) 0 }}
+        {{ $allChurned := .AllChurned }}
+        {{ if eq $allChurned.Count 0 }}
             <table class="table-even small" id="churn-{{.Name}}">
                 <thead>
                 <tr>
@@ -637,7 +642,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {{ range .ChurnedCustomers.SortedByDate }}
+                    {{ range $allChurned.SortedByDayOfMonth }}
                         <tr>
                             <td class="person" title="{{.Name}} ({{.Country}})">
                                 {{.Name}}
@@ -653,7 +658,7 @@
                     </tbody>
                     <tfoot>
                     <tr>
-                        <th colspan="5">{{len .ChurnedCustomers}} customers</th>
+                        <th colspan="5">{{$allChurned.Count}} customers</th>
                     </tr>
                     </tfoot>
                 </table>
@@ -666,7 +671,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {{ range .ChurnedCustomers.Customers.GroupByCountry }}
+                    {{ range $allChurned.Customers.GroupByCountry }}
                         <tr>
                             <td class="col-right">{{.Name}}</td>
                             <td class="num">{{len .Customers}}</td>
@@ -683,7 +688,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {{ $paidDuration := .ChurnedCustomers.GroupByPaidDuration $firstPurchases }}
+                    {{ $paidDuration := $allChurned.GroupByPaidDuration $firstPurchases }}
                     {{ range $paidDuration }}
                         <tr>
                             <td class="col-right">{{.Name}}</td>
@@ -708,36 +713,36 @@
                 <th class="num">Unique Downloads</th>
                 <th class="num">Active Customers</th>
                 <th class="num">Monthly Sales (USD)</th>
-                <th class="num">Annual Recurring Revenue (ARR)</th>
-                <th class="num">New Sales</th>
+                <th class="num" title="Annual Recurring Revenue">ARR</th>
+                <th class="num col-left" colspan="2">New Sales</th>
             </tr>
             </thead>
             <tbody>
             {{ range .Years }}
                 {{ range .Months }}
-                    {{ if not .PrevMonth }}
+                    {{ if not .PreviousMonth }}
                         <tr id="growth-{{.Name}}">
                             <td>{{.Name}}</td>
                             <td class="num">—</td>
                             <td class="num">—</td>
                             <td class="num">—</td>
                             <td class="num">—</td>
-                            <td class="num">—</td>
+                            <td colspan="2" class="num">—</td>
                         </tr>
                     {{ else }}
                         <tr id="growth-{{.Name}}" {{ if .IsActiveMonth }}class="today"{{end}}>
                             <td>{{.Name}} {{- if .IsActiveMonth}} <span class="incomplete">(incomplete)</span>{{end}}
                             </td>
-                            <td class="num {{if lt .PrevMonth.DownloadsUnique .DownloadsUnique}}num-plus{{else}}num-minus{{end}}"
-                                title="{{formatInt .DownloadsUnique}} unique downloads">{{growthPercentage .PrevMonth.DownloadsUnique .DownloadsUnique}}</td>
-                            <td class="num {{if lt .PrevMonth.ActiveCustomersTotal .ActiveCustomersTotal}}num-plus{{else}}num-minus{{end}}"
-                                title="{{formatInt .ActiveCustomersTotal}} active customers">{{growthPercentage .PrevMonth.ActiveCustomersTotal .ActiveCustomersTotal}}</td>
-                            <td class="num {{if lt .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}num-plus{{else}}num-minus{{end}}"
-                                title="{{.TotalSalesUSD.Total.Format}} USD this month">{{growthPercentage .PrevMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}</td>
-                            <td class="num {{if lt .PrevMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}num-plus{{else}}num-minus{{end}}"
-                                title="ARR: {{.AnnualRevenueUSD.PaidOut.Format}} USD">{{growthPercentage .PrevMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}</td>
-                            <td class="num {{if lt .PrevMonth.NewSalesUSD.Total .NewSalesUSD.Total}}num-plus{{else}}num-minus{{end}}"
-                                title="Sales to new customer">{{growthPercentage .PrevMonth.NewSalesUSD.Total .NewSalesUSD.Total}}</td>
+                            <td class="num {{if lt .PreviousMonth.DownloadsUnique .DownloadsUnique}}num-plus{{else}}num-minus{{end}}"
+                                title="{{formatInt .DownloadsUnique}} unique downloads">{{growthPercentage .PreviousMonth.DownloadsUnique .DownloadsUnique}}</td>
+                            <td class="num {{if lt .PreviousMonth.ActiveCustomersTotal .ActiveCustomersTotal}}num-plus{{else}}num-minus{{end}}"
+                                title="{{formatInt .ActiveCustomersTotal}} active customers">{{growthPercentage .PreviousMonth.ActiveCustomersTotal .ActiveCustomersTotal}}</td>
+                            <td class="num {{if lt .PreviousMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}num-plus{{else}}num-minus{{end}}"
+                                title="{{.TotalSalesUSD.Total.Format}} USD this month">{{growthPercentage .PreviousMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}</td>
+                            <td class="num {{if lt .PreviousMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}num-plus{{else}}num-minus{{end}}"
+                                title="ARR: {{.AnnualRevenueUSD.PaidOut.Format}} USD">{{growthPercentage .PreviousMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}</td>
+                            <td class="num {{if lt .PreviousMonth.NewSalesUSD.Total .NewSalesUSD.Total}}num-plus{{else}}num-minus{{end}}" title="Percental change of sales to new customer">{{ growthPercentage .PreviousMonth.NewSalesUSD.Total .NewSalesUSD.Total }}</td>
+                            <td class="num" title="Sales to new customer">{{ percentage .NewSalesUSD.Total .TotalSalesUSD.Total }}</td>
                         </tr>
                     {{ end }}
                 {{ end }}
