@@ -183,7 +183,7 @@
             font-style: italic;
         }
 
-        .badge-new, .badge-churned {
+        .badge-new, .badge-churned, .badge-free {
             font-size: .8em;
             line-height: 1.0;
             border-radius: 3px;
@@ -199,6 +199,11 @@
 
         .badge-churned {
             background-color: #cc0000;
+            color: #fff;
+        }
+
+        .badge-free {
+            background-color: #476a95;
             color: #fff;
         }
 
@@ -422,7 +427,7 @@
                         <td class="num num-percentage">
                             {{ $allAnnualChurned := .AllAnnualChurnedYear}}
                             {{ if and .HasAnnualChurnRate $allAnnualChurned.IsNotEmpty }}
-                                <span title="{{$allAnnualChurned.Count}} of {{.ChurnedAnnual.ActiveUserCount}} annual subscribers did not renew">
+                                <span title="{{$allAnnualChurned.Count}} of {{.ChurnedAnnual.ActiveUserCount}} annual subscribers did not renew (excludes free subscriptions)">
                                 <a href="#churn-{{ .Name }}">{{- printf "%.2f" $allAnnualChurned.ChurnRatePercentage }}%</a>
                             </span>
                             {{ else }}
@@ -643,11 +648,12 @@
                     </thead>
                     <tbody>
                     {{ range $allChurned.SortedByDayOfMonth }}
-                        <tr>
+                        <tr class="{{if .FreeSubscription}}disabled{{end}}">
                             <td class="person" title="{{.Name}} ({{.Country}})">
                                 {{.Name}}
                                 <a class="noprint" href="#customer-{{.ID}}" title="Total sales">🌏</a>
                                 <a class="noprint" href="javascript:setSalesTableFilter('{{.ID}}')" title="Individual sales">🔍</a>
+                                {{if .FreeSubscription}}<span class="badge-free">free</span>{{end}}
                             </td>
                             <td>{{ .Type }}</td>
                             <td class="num">{{ .PaidDuration (index $firstPurchases .ID) }}</td>

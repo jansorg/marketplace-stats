@@ -8,8 +8,9 @@ import (
 
 type ChurnedCustomer struct {
 	Customer
-	LastPurchase YearMonthDay
-	Subscription Subscription
+	LastPurchase     YearMonthDay
+	Subscription     Subscription
+	FreeSubscription bool
 }
 
 func (c ChurnedCustomer) PaidDuration(first YearMonthDay) string {

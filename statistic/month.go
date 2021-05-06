@@ -98,7 +98,8 @@ func (m *Month) AllChurned() marketplace.ChurnedCustomers {
 	}
 }
 
-// all users who churned in the previous 12 months, not just newly churned in the current month
+// AllAnnualChurnedYear returns all users who churned in the previous 12 months, not just newly churned in the current month
+// This doesn't contain free licenses, which were not renewed.
 func (m *Month) AllAnnualChurnedYear() marketplace.ChurnedCustomers {
 	seen := make(map[marketplace.CustomerID]bool)
 	var churned []marketplace.ChurnedCustomer
@@ -107,7 +108,7 @@ func (m *Month) AllAnnualChurnedYear() marketplace.ChurnedCustomers {
 	month := m
 	for i < 12 && month != nil {
 		for _, c := range month.ChurnedAnnual.ChurnedCustomers {
-			if !seen[c.ID] {
+			if !seen[c.ID] && !c.FreeSubscription {
 				churned = append(churned, c)
 				seen[c.ID] = true
 			}
@@ -253,9 +254,10 @@ func computeMonthlyChurn(month marketplace.YearMonth, allSales marketplace.Sales
 			saleExpected := previousMonthSales[candidate.ID].LatestPurchase().AddDate(0, 1, graceDays).Before(now)
 			if !upgraded && !boughtAgain && saleExpected {
 				churned = append(churned, marketplace.ChurnedCustomer{
-					Customer:     candidate,
-					LastPurchase: marketplace.NewYearMonthDayByDate(previousMonthSales[candidate.ID].LatestPurchase()),
-					Subscription: marketplace.MonthlySubscription,
+					Customer:         candidate,
+					LastPurchase:     marketplace.NewYearMonthDayByDate(previousMonthSales[candidate.ID].LatestPurchase()),
+					Subscription:     marketplace.MonthlySubscription,
+					FreeSubscription: previousMonthSales[candidate.ID].TotalUSD.IsZero(),
 				})
 			}
 		}
@@ -290,9 +292,10 @@ func computeAnnualChurn(month marketplace.YearMonth, allSales marketplace.Sales,
 		_, boughtAgain := salesGraceTime[candidate.ID]
 		if expected && !boughtAgain {
 			churned = append(churned, marketplace.ChurnedCustomer{
-				Customer:     candidate,
-				LastPurchase: lastPurchases[candidate.ID],
-				Subscription: marketplace.AnnualSubscription,
+				Customer:         candidate,
+				LastPurchase:     lastPurchases[candidate.ID],
+				Subscription:     marketplace.AnnualSubscription,
+				FreeSubscription: prevYearSales[candidate.ID].TotalUSD.IsZero(),
 			})
 		}
 	}
