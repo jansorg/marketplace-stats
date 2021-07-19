@@ -36,7 +36,7 @@ type HTMLReport struct {
 	Timeline *Timeline
 }
 
-func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.Sales, client marketplace.Client) (*HTMLReport, error) {
+func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.Sales, client marketplace.Client, graceDays int) (*HTMLReport, error) {
 	allSales := allSalesUnsorted.SortedByDate()
 
 	monthlyDownloadsUnique, err := client.DownloadsMonthly(true, "", "", "", "", "")
@@ -58,7 +58,7 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.S
 		var previousYearStats *statistic.Year
 		for year <= lastYear {
 			yearStats := statistic.NewYear(year)
-			yearStats.Update(previousYearStats, allSales, monthlyDownloadsTotal, monthlyDownloadsUnique)
+			yearStats.Update(previousYearStats, allSales, monthlyDownloadsTotal, monthlyDownloadsUnique, graceDays)
 
 			years = append(years, yearStats)
 			previousYearStats = yearStats

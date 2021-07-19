@@ -142,7 +142,7 @@ func findMonth(downloads []marketplace.DownloadMonthly, yearMonth time.Time) int
 }
 
 // Update the current month's data from the complete collection of sales
-func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downloadsTotal []marketplace.DownloadMonthly, downloadsUnique []marketplace.DownloadMonthly) {
+func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downloadsTotal []marketplace.DownloadMonthly, downloadsUnique []marketplace.DownloadMonthly, graceDays int) {
 	m.PreviousMonth = previousMonthData
 
 	// find download counts
@@ -175,11 +175,11 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 
 	// Churn, JetBrains said that there's a 7 days grace time for expired licenses
 	if m.HasAnnualChurnRate() {
-		m.ChurnedAnnual = computeAnnualChurn(marketplace.NewYearMonthByDate(m.Date), sales, 7)
+		m.ChurnedAnnual = computeAnnualChurn(marketplace.NewYearMonthByDate(m.Date), sales, graceDays)
 		m.ChurnedAnnual.ActiveUserCount = m.PreviousYearMonth().ActiveCustomersAnnual
 	}
 	if m.HasMonthlyChurnRate() {
-		m.ChurnedMonthly = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date), sales, 7)
+		m.ChurnedMonthly = computeMonthlyChurn(marketplace.NewYearMonthByDate(m.Date), sales, graceDays)
 		m.ChurnedMonthly.ActiveUserCount = m.PreviousMonth.ActiveCustomersMonthly
 	}
 

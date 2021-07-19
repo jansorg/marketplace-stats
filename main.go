@@ -26,6 +26,7 @@ func main() {
 	fileParam := flag.String("cache-file", "", "The file where sales data is cached. Use -fetch to update it.")
 	fetchParam := flag.Bool("fetch", true, "The file where sales data is cached. Use -fetch to update it.")
 	reportFileParam := flag.String("out", "report.html", "The file where the HTML sales report is saved.")
+	gracePeriodDays := flag.Int("grace-days", 7, "The grace period in days before a subscription is shown as churned.")
 	flag.Parse()
 
 	if *pluginID == "" {
@@ -68,7 +69,7 @@ func main() {
 		fatalOpt(err)
 	}
 
-	htmlReport, err := report.NewReport(pluginInfo, sales, client)
+	htmlReport, err := report.NewReport(pluginInfo, sales, client, *gracePeriodDays)
 	fatalOpt(err)
 
 	html, err := htmlReport.Generate()
