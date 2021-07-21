@@ -9,7 +9,7 @@
 <head>
     <title>{{$report.PluginInfo.Name}} Sales Report</title>
     <meta charset="UTF-8">
-    <style type="text/css" media="print">
+    <style media="print">
         .noprint {
             display: none;
         }
@@ -23,7 +23,7 @@
             margin: 0.5cm;
         }
     </style>
-    <style type="text/css">
+    <style>
         /* Default font */
         @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&display=swap');
         /* Chinese fallback */
@@ -329,7 +329,7 @@
 
 <body>
 <h1>{{$report.PluginInfo.Name}}</h1>
-<h2 class="subtitle">{{.Date.Format "2006-01-02"}}</h2>
+<h2 class="subtitle">{{.Date.Format "2006-01-02"}}<br><span title="{{ .Rating.VotesCount }} ratings = {{ .Rating.CalculateRating }}">★ {{ formatFloat .Rating.CalculateRating }}</span></h2>
 <h2 class="subtitle menu small">
     <a href="#section-total-sales">Total Sales</a>
     <a href="#section-sales">Sales</a>

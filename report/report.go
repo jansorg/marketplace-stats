@@ -16,6 +16,7 @@ import (
 type HTMLReport struct {
 	Date       time.Time
 	PluginInfo marketplace.PluginInfo
+	Rating     marketplace.Rating
 
 	Sales                    marketplace.Sales
 	Customers                marketplace.Customers
@@ -37,6 +38,11 @@ type HTMLReport struct {
 }
 
 func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.Sales, client marketplace.Client, graceDays int) (*HTMLReport, error) {
+	pluginRating, err := client.GetCurrentPluginRating()
+	if err != nil {
+		return nil, err
+	}
+
 	allSales := allSalesUnsorted.SortedByDate()
 
 	monthlyDownloadsUnique, err := client.DownloadsMonthly(true, "", "", "", "", "")
@@ -74,6 +80,7 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.S
 	return &HTMLReport{
 		Date:                     time.Now(),
 		PluginInfo:               pluginInfo,
+		Rating:                   pluginRating,
 		Timeline:                 NewMonthlyTimeline(allSales, monthlyDownloadsUnique),
 		Sales:                    allSales,
 		Week:                     week,
@@ -120,6 +127,9 @@ func (r HTMLReport) Generate() (string, error) {
 		},
 		"formatInt": func(n int) string {
 			return util.FormatInt(n)
+		},
+		"formatFloat": func(f float64) string {
+			return util.FormatFloat(f)
 		},
 		"percentage": func(a, b interface{}) (string, error) {
 			f1, err := toFloat(a)

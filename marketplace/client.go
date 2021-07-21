@@ -11,6 +11,8 @@ import (
 type Client interface {
 	GetCurrentPluginInfo() (PluginInfo, error)
 	GetPluginInfo(id string) (PluginInfo, error)
+	GetCurrentPluginRating() (Rating, error)
+	GetPluginRating(id string) (Rating, error)
 	DownloadsMonthly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadMonthly, error)
 	DownloadsWeekly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadAndDate, error)
 	DownloadsDaily(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadAndDate, error)
@@ -45,6 +47,16 @@ func (c *client) GetPluginInfo(id string) (PluginInfo, error) {
 	var plugin PluginInfo
 	err := c.GetJSON(fmt.Sprintf("/api/plugins/%s", id), nil, &plugin)
 	return plugin, err
+}
+
+func (c *client) GetCurrentPluginRating() (Rating, error) {
+	return c.GetPluginRating(c.pluginID)
+}
+
+func (c *client) GetPluginRating(id string) (Rating, error) {
+	var rating Rating
+	err := c.GetJSON(fmt.Sprintf("/api/plugins/%s/rating", id), nil, &rating)
+	return rating, err
 }
 
 func (c *client) DownloadsMonthly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadMonthly, error) {
