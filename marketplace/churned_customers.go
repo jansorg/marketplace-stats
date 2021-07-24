@@ -29,6 +29,14 @@ func (c ChurnedCustomer) PaidDuration(first YearMonthDay) string {
 
 type ChurnedCustomerList []ChurnedCustomer
 
+func (c ChurnedCustomerList) Customers() Customers {
+	var customers Customers
+	for _, churned := range c {
+		customers = append(customers, churned.Customer)
+	}
+	return customers
+}
+
 func NewChurnedCustomers(customers []ChurnedCustomer) ChurnedCustomers {
 	return ChurnedCustomers{
 		ChurnedCustomers: customers,
@@ -37,7 +45,7 @@ func NewChurnedCustomers(customers []ChurnedCustomer) ChurnedCustomers {
 }
 
 type ChurnedCustomers struct {
-	ChurnedCustomers []ChurnedCustomer
+	ChurnedCustomers ChurnedCustomerList
 	ActiveUserCount  int
 }
 

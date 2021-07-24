@@ -155,6 +155,14 @@ func (s Sales) ByNewCustomers(allPreviousSales Sales, referenceDate time.Time) S
 	})
 }
 
+func (s Sales) ByReturnedCustomers(previouslyChurned ChurnedCustomerList) Sales {
+	churnedCustomers := previouslyChurned.Customers().AsMap()
+	return s.FilterBy(func(sale Sale) bool {
+		_, seen := churnedCustomers[sale.Customer.ID]
+		return seen
+	})
+}
+
 func (s Sales) CustomersMap() CustomersMap {
 	result := make(CustomersMap)
 	for _, s := range s {

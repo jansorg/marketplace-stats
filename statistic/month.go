@@ -26,8 +26,15 @@ type Month struct {
 	NewCustomersAnnual  int
 	NewCustomersMonthly int
 
+	// Churned Customers
 	ChurnedAnnual  marketplace.ChurnedCustomers
 	ChurnedMonthly marketplace.ChurnedCustomers
+
+	// Returned customers, who churned before and are back this month
+	ReturnedCustomers        int
+	ReturnedCustomersAnnual  int
+	ReturnedCustomersMonthly int
+	ReturnedCustomersList    marketplace.Customers
 
 	ActiveCustomersMonthly int
 	ActiveCustomersAnnual  int
@@ -123,6 +130,45 @@ func (m *Month) AllAnnualChurnedYear() marketplace.ChurnedCustomers {
 	}
 }
 
+// CollectAllChurned returns all churned users of previous periods, which did not return until the current period
+func (m *Month) CollectAllChurned() marketplace.ChurnedCustomerList {
+	if m.PreviousMonth == nil {
+		return marketplace.ChurnedCustomerList{}
+	}
+
+	currentCustomers := m.CustomersMap
+	churned := make(map[marketplace.CustomerID]marketplace.ChurnedCustomer)
+
+	if m.PreviousMonth != nil {
+		prevMonthChurned := m.PreviousMonth.CollectAllChurned()
+		for _, c := range prevMonthChurned {
+			_, seen := currentCustomers[c.ID]
+			if !seen {
+				churned[c.ID] = c
+			}
+		}
+
+		for _, c := range m.AllChurned().ChurnedCustomers {
+			_, seen := currentCustomers[c.ID]
+			if !seen {
+				churned[c.ID] = c
+			}
+		}
+	}
+
+	var churnedList marketplace.ChurnedCustomerList
+	for _, c := range churned {
+		churnedList = append(churnedList, c)
+	}
+	return churnedList
+}
+
+func (m *Month) AllReturnedCustomers() marketplace.Customers {
+	result := m.ReturnedCustomersList
+	result.SortByID()
+	return result
+}
+
 func (m *Month) HasAnnualChurnRate() bool {
 	return m.PreviousYearMonth() != nil
 }
@@ -166,6 +212,19 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	m.NewCustomersMonthly = len(newMonthlyCustomersMap.Without(newAnnualCustomersMap))
 	m.NewCustomers = m.NewCustomersMonthly + m.NewCustomersAnnual
 
+	// Returned customers
+	if previousMonthData != nil {
+		allChurned := previousMonthData.CollectAllChurned()
+		returnedCustomerSales := currentMonthSales.ByReturnedCustomers(allChurned)
+		returnedAnnualCustomers := returnedCustomerSales.ByAnnualSubscription().CustomersMap()
+		returnedMonthlyCustomers := returnedCustomerSales.ByMonthlySubscription().CustomersMap()
+
+		m.ReturnedCustomersAnnual = len(returnedAnnualCustomers)
+		m.ReturnedCustomersMonthly = len(returnedMonthlyCustomers.Without(returnedAnnualCustomers))
+		m.ReturnedCustomers = m.ReturnedCustomersMonthly + m.ReturnedCustomersAnnual
+		m.ReturnedCustomersList = returnedCustomerSales.Customers()
+	}
+
 	// Sales
 	m.TotalSalesUSD.Total = currentMonthSales.TotalSumUSD()
 	m.TotalSalesUSD.Fee = currentMonthSales.FeeSumUSD()
@@ -184,14 +243,13 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 	}
 
 	// Active customers
+	m.ActiveCustomersMonthly = m.NewCustomersMonthly + m.ReturnedCustomersMonthly
+	m.ActiveCustomersAnnual = m.NewCustomersAnnual + m.ReturnedCustomersAnnual
+	m.ActiveCustomersTotal = m.NewCustomers + m.ReturnedCustomers
 	if previousMonthData != nil {
-		m.ActiveCustomersMonthly = previousMonthData.ActiveCustomersMonthly - m.ChurnedMonthly.Count() + m.NewCustomersMonthly
-		m.ActiveCustomersAnnual = previousMonthData.ActiveCustomersAnnual - m.ChurnedAnnual.Count() + m.NewCustomersAnnual
-		m.ActiveCustomersTotal = previousMonthData.ActiveCustomersTotal - m.ChurnedAnnual.Count() - m.ChurnedMonthly.Count() + m.NewCustomers
-	} else {
-		m.ActiveCustomersMonthly = m.NewCustomersMonthly
-		m.ActiveCustomersAnnual = m.NewCustomersAnnual
-		m.ActiveCustomersTotal = m.NewCustomers
+		m.ActiveCustomersMonthly += previousMonthData.ActiveCustomersMonthly - m.ChurnedMonthly.Count()
+		m.ActiveCustomersAnnual += previousMonthData.ActiveCustomersAnnual - m.ChurnedAnnual.Count()
+		m.ActiveCustomersTotal += previousMonthData.ActiveCustomersTotal - m.ChurnedAnnual.Count() - m.ChurnedMonthly.Count()
 	}
 
 	// projected annual revenue (ARR)

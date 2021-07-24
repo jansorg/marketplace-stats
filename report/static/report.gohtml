@@ -335,6 +335,7 @@
     <a href="#section-sales">Sales</a>
     <a href="#section-growth">Growth</a>
     <a href="#section-monthly-churned">Churned Users</a>
+    <a href="#section-monthly-returned">Returned Users</a>
     <a href="#section-glossary">Glossary</a>
 </h2>
 
@@ -426,7 +427,7 @@
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
                         <td class="num">{{ .AnnualRevenueUSD.PaidOut.Format }} USD</td>
-                        <td class="num" title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{.ChurnedAnnual.Count}} churned annual users&#xA;{{.ChurnedMonthly.Count}} churned monthly users">
+                        <td class="num" title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{.ChurnedAnnual.Count}} churned annual users&#xA;{{.ChurnedMonthly.Count}} churned monthly users&#xA;{{.ReturnedCustomersAnnual}} returned annual&#xA;{{.ReturnedCustomersMonthly}} returned monthly">
                             {{ .ActiveCustomersTotal }}
                         </td>
                         <td class="num num-percentage">
@@ -707,6 +708,57 @@
                         </tr>
                     {{ end }}
                     </tbody>
+                </table>
+            </div>
+        {{ end }}
+    {{ end }}
+{{ end }}
+
+<h2 id="section-monthly-returned">Monthly Returned Users</h2>
+<p class="desc">Churned users, who returned</p>
+{{ range $report.Years }}
+    {{ range .Months }}
+        {{ $month := . }}
+        {{ $allReturned := .AllReturnedCustomers }}
+        {{ if eq (len $allReturned) 0 }}
+            <table class="table-even small" id="returned-{{.Name}}">
+                <thead>
+                <tr>
+                    <th><h3>{{.Name}}</h3></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>—</td>
+                </tr>
+                </tbody>
+            </table>
+        {{ else }}
+            <div class="sections">
+                <table class="table-even table-striped small" id="returned-{{.Name}}">
+                    <thead>
+                    <tr>
+                        <th style="width:35%;"><h3>{{.Name}}</h3></th>
+                        <th title="Customer type">Type</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{ range $allReturned }}
+                        <tr>
+                            <td class="person" title="{{.Name}} ({{.Country}})">
+                                {{.Name}}
+                                <a class="noprint" href="#customer-{{.ID}}" title="Total sales">🌏</a>
+                                <a class="noprint" href="javascript:setSalesTableFilter('{{.ID}}')" title="Individual sales">🔍</a>
+                            </td>
+                            <td>{{ .Type }}</td>
+                        </tr>
+                    {{ end }}
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th colspan="2">{{len $allReturned}} customers</th>
+                    </tr>
+                    </tfoot>
                 </table>
             </div>
         {{ end }}
