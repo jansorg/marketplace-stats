@@ -4,9 +4,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/css"
+	"github.com/tdewolff/minify/v2/html"
+	"github.com/tdewolff/minify/v2/js"
+	"github.com/tdewolff/minify/v2/svg"
 	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/jansorg/marketplace-stats/marketplace"
@@ -72,15 +78,24 @@ func main() {
 	htmlReport, err := report.NewReport(pluginInfo, sales, client, *gracePeriodDays)
 	fatalOpt(err)
 
-	html, err := htmlReport.Generate()
+	htmlData, err := htmlReport.Generate()
+	fatalOpt(err)
+
+	m := minify.New()
+	m.AddFunc("text/css", css.Minify)
+	m.AddFunc("text/html", html.Minify)
+	m.AddFunc("image/svg+xml", svg.Minify)
+	m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
+
+	htmlMinified, err := m.String("text/html", htmlData)
 	fatalOpt(err)
 
 	if *reportFileParam != "" && *reportFileParam != "-" {
-		err = ioutil.WriteFile(*reportFileParam, []byte(html), 0600)
+		err = ioutil.WriteFile(*reportFileParam, []byte(htmlMinified), 0600)
 		fatalOpt(err)
 	} else {
 		// print to stdout
-		fmt.Println(html)
+		fmt.Println(htmlMinified)
 	}
 }
 
