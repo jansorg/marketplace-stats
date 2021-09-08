@@ -330,7 +330,7 @@
 
 <body>
 <h1>{{$report.PluginInfo.Name}}</h1>
-<h2 class="subtitle">{{.Date.Format "2006-01-02"}}<br><span title="{{ .Rating.VotesCount }} ratings = {{ .Rating.CalculateRating }}">★ {{ formatFloat .Rating.CalculateRating }}</span></h2>
+<h2 class="subtitle">{{.Date.Format "2006-01-02"}}<br><span title="{{ .Rating.VotesCount }} ratings = {{ .Rating.CalculateRating }}{{ range $k, $v := .Rating.Votes }}&#xA;{{$k}}★: {{$v}} votes{{ end }}">★ {{ formatFloat .Rating.CalculateRating }}</span></h2>
 <h2 class="subtitle menu small">
     <a href="#section-total-sales">Total Sales</a>
     <a href="#section-sales">Sales</a>
