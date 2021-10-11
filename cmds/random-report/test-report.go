@@ -22,10 +22,10 @@ func main() {
 	sales, err := client.GetAllSalesInfo()
 	fatalOpt(err)
 
-	r, err := report.NewReport(pluginInfo, sales, client)
+	r, err := report.NewReport(pluginInfo, sales, client, 7)
 	fatalOpt(err)
 
-	html, err := r.Generate()
+	html, err := r.Generate(false)
 	fatalOpt(err)
 	fmt.Println(html)
 }

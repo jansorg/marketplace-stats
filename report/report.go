@@ -117,7 +117,7 @@ func toFloat(v interface{}) (float64, error) {
 	return 0.0, fmt.Errorf("unknown type: %T", v)
 }
 
-func (r HTMLReport) Generate() (string, error) {
+func (r HTMLReport) Generate(anonymized bool) (string, error) {
 	funcMap := template.FuncMap{
 		"addInt": func(a, b int) int {
 			return a + b
@@ -159,7 +159,12 @@ func (r HTMLReport) Generate() (string, error) {
 		},
 	}
 
-	templateString := FSMustString(false, "/static/report.gohtml")
+	reportName := "/static/report.gohtml"
+	if anonymized {
+		reportName = "/static/report-anonymized.gohtml"
+	}
+
+	templateString := FSMustString(false, reportName)
 	report, err := template.New("basic").Funcs(funcMap).Parse(templateString)
 	if err != nil {
 		return "", err

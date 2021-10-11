@@ -27,21 +27,22 @@ func fatalOpt(err error) {
 
 func main() {
 	pluginID := flag.String("plugin-id", "", "The ID of the plugin, e.g. 12345.")
-	tokenParam := flag.String("token", "", "The token to access the API of the JetBrains marketplace. --token-file is an alternative.")
+	tokenParam := flag.String("token", "", "The token to access the API of the JetBrains marketplace. -token-file is an alternative.")
 	tokenFileParam := flag.String("token-file", "", "Path to a file, which contains the token to access the API of the JetBrains marketplace.")
 	fileParam := flag.String("cache-file", "", "The file where sales data is cached. Use -fetch to update it.")
 	fetchParam := flag.Bool("fetch", true, "The file where sales data is cached. Use -fetch to update it.")
 	reportFileParam := flag.String("out", "report.html", "The file where the HTML sales report is saved.")
 	gracePeriodDays := flag.Int("grace-days", 7, "The grace period in days before a subscription is shown as churned.")
+	anonymizedReport := flag.Bool("anonymized", false, "If the report should be anonymized and not include critical data like sales.")
 	flag.Parse()
 
 	if *pluginID == "" {
-		fmt.Fprintln(os.Stderr, "Plugin ID not defined. Use --plugin-id to define it.")
+		_, _ = fmt.Fprintln(os.Stderr, "Plugin ID not defined. Use -plugin-id to define it.")
 		return
 	}
 
 	if *fetchParam && *tokenParam == "" && *tokenFileParam == "" {
-		fmt.Fprintln(os.Stderr, "Unable to load sales data without a token. Please provide the marketplace API token.")
+		_, _ = fmt.Fprintln(os.Stderr, "Unable to load sales data without a token. Please provide the marketplace API token.")
 		return
 	}
 
@@ -63,6 +64,7 @@ func main() {
 		if *fileParam != "" {
 			cacheFile, err := os.OpenFile(*fileParam, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 			defer cacheFile.Close()
+
 			encoder := json.NewEncoder(cacheFile)
 			encoder.SetIndent("", "  ")
 			err = encoder.Encode(sales)
@@ -78,7 +80,7 @@ func main() {
 	htmlReport, err := report.NewReport(pluginInfo, sales, client, *gracePeriodDays)
 	fatalOpt(err)
 
-	htmlData, err := htmlReport.Generate()
+	htmlData, err := htmlReport.Generate(*anonymizedReport)
 	fatalOpt(err)
 
 	m := minify.New()

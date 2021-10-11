@@ -22,16 +22,20 @@ GO111MODULE=on go get github.com/jansorg/marketplace-stats
 # Command Line Usage
 ```plain
 Usage of ./marketplace-stats:
+  -anonymized
+        If the report should be anonymized and not include critical data like sales.
   -cache-file string
         The file where sales data is cached. Use -fetch to update it.
   -fetch
         The file where sales data is cached. Use -fetch to update it. (default true)
+  -grace-days int
+        The grace period in days before a subscription is shown as churned. (default 7)
   -out string
         The file where the HTML sales report is saved. (default "report.html")
   -plugin-id string
         The ID of the plugin, e.g. 12345.
   -token string
-        The token to access the API of the JetBrains marketplace. --token-file is an alternative.
+        The token to access the API of the JetBrains marketplace. -token-file is an alternative.
   -token-file string
         Path to a file, which contains the token to access the API of the JetBrains marketplace.
 ```
@@ -48,6 +52,14 @@ The following command generates `report.html` for plugin 123456. The token is re
 ```bash
 # marketplace-stats is in $GOPATH/bin, e.g. $HOME/go/bin
 marketplace-stats -plugin-id 123456 -token-file token.txt -out report.html 
+```
+
+# Generating Reports For Sharing
+An anonymized report only contains data which is valuable for other developers without revealing the actual sales and number of active users. 
+
+```bash
+# marketplace-stats is in $GOPATH/bin, e.g. $HOME/go/bin
+marketplace-stats -anonymized -plugin-id 123456 -token-file token.txt -out report-anonymized.html 
 ```
 
 ## Tips & Tricks

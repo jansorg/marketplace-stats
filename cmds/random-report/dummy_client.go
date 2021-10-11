@@ -1,11 +1,28 @@
 package main
 
-import "github.com/jansorg/marketplace-stats/marketplace"
+import (
+	"github.com/jansorg/marketplace-stats/marketplace"
+)
 
 type dummyClient struct {
 	customers marketplace.Customers
 	sales     marketplace.Sales
 	downloads []marketplace.DownloadAndDate
+}
+
+func (d *dummyClient) GetCurrentPluginRating() (marketplace.Rating, error) {
+	return marketplace.Rating{
+		MeanRating: 4.8,
+		MeanVotes:  2,
+		UserRating: 1,
+		Votes: map[string]int{
+			"5": 5,
+		},
+	}, nil
+}
+
+func (d *dummyClient) GetPluginRating(id string) (marketplace.Rating, error) {
+	panic("implement me")
 }
 
 func NewDummyClient(customerCount, salesCount, salesMonths int) *dummyClient {

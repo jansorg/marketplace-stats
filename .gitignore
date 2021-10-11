@@ -7,3 +7,4 @@ marketplace-stats
 random-report
 .idea/
 dist/
+node_modules/

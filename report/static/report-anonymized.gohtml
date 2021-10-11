@@ -1,0 +1,384 @@
+{{ $report := . }}
+{{ $reportTotalUSD := .Sales.TotalSumUSD }}
+{{ $firstPurchases := .Sales.CustomersFirstPurchase }}
+{{ $lastPurchases := .Sales.CustomersLastPurchase }}
+{{ $customerSalesMap := .Sales.CustomerSalesMap }}
+{{ $latestMonth := .LatestMonth }}
+
+<html lang="en">
+<head>
+    <title>{{$report.PluginInfo.Name}} Anonymized Sales Report</title>
+    <meta charset="UTF-8">
+    <style media="print">
+        .noprint {
+            display: none;
+        }
+
+        .noprintlink {
+            color: var(--text-color);
+        }
+
+        @page {
+            size: A4 landscape;
+            margin: 0.5cm;
+        }
+    </style>
+    <style>
+        /* Default font */
+        @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&display=swap');
+        /* Chinese fallback */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC&display=swap');
+
+        :root {
+            --heading-color: #00008b;
+            --now-color: #00008b;
+            --future-color: #808080;
+            --link-color: #4545e6;
+            --link-color-active: #ff0000;
+            --stripe-bgcolor: #f2f2f2;
+            --separator-color: #808080;
+            --positive-color: #119e39;
+            --negative-color: #ff0000;
+            --text-color: #000;
+            --text-color-disabled: #808080;
+        }
+
+        /* reset */
+        html, body, h1, h2, h3, h4, h5, p, div, table, tr, th, td, svg, img, dl, dt, dd {
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;
+        }
+
+        /* html tags */
+        html {
+            font-family: 'Lato', 'Noto Sans SC', sans-serif;
+        }
+
+        body {
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--heading-color)
+        }
+
+        h1 {
+            font-weight: 900;
+            font-size: 2.5rem;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+        }
+
+        h3, h4 {
+            font-size: 1rem;
+        }
+
+        h2, h3, b, strong {
+            font-weight: 800;
+        }
+
+        a, a:visited {
+            text-decoration: none;
+            color: var(--link-color);
+        }
+
+        a:hover {
+            color: var(--link-color-active);
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin: 1rem 0 2rem 0;
+        }
+
+        th {
+            text-align: left;
+            vertical-align: baseline;
+        }
+
+        th, td {
+            padding: .1rem .45rem;
+        }
+
+        th:last-child, td:last-child {
+            padding-right: 0;
+        }
+
+        th:first-child, td:first-child {
+            padding-left: 0;
+        }
+
+        thead th {
+            border-bottom: 1px solid var(--separator-color);
+        }
+
+        thead h2, thead h3, thead h4 {
+            font-size: 1em;
+            white-space: nowrap;
+        }
+
+        tfoot th {
+            border-top: 1px solid var(--separator-color);
+        }
+
+        dt {
+            font-weight: 800;
+        }
+
+        dd {
+            margin-left: 2rem;
+            max-width: 50%;
+        }
+
+        /* custom */
+        .subtitle {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 300;
+            line-height: 1.5rem;
+            margin: 0 0 2rem 0;
+        }
+
+        .table-striped tbody tr:nth-child(even) {
+            background-color: var(--stripe-bgcolor);
+        }
+
+        .small {
+            font-size: .8rem;
+        }
+
+        .num, .month, .date {
+            font-variant: common-ligatures tabular-nums;
+            white-space: nowrap;
+        }
+
+        th.num, td.num, th.date, td.date, th.col-right, td.col-right {
+            text-align: right;
+        }
+
+        .sections {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .section {
+            width: 50%;
+            margin: 0 0 2rem 0;
+        }
+
+        .section-small {
+            width: auto;
+            margin: 0 1rem 0 0;
+        }
+
+        .section-wide, .section-wide table {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+<h1>{{$report.PluginInfo.Name}}</h1>
+<h2 class="subtitle">{{.Date.Format "2006-01-02"}} (Anonymized)<br><span title="{{ .Rating.VotesCount }} ratings = {{ .Rating.CalculateRating }}{{ range $k, $v := .Rating.Votes }}&#xA;{{$k}}★: {{$v}} votes{{ end }}">★ {{ formatFloat .Rating.CalculateRating }}</span></h2>
+
+<div class="sections">
+    <div class="section section-wide section-monthly">
+        <table class="small table-striped">
+            {{ range $report.Years }}
+                <thead>
+                <tr>
+                    <th><h2>{{.Year}}</h2></th>
+                    <th class="num" title="Churned annual subscribers">Annual Churn</th>
+                    <th class="num" title="Churned monthly subscribers">Monthly Churn</th>
+                    <th class="num" title="Total Downloads">Downloads</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{ range .Months }}
+                    {{ if not .IsActiveMonth}}
+                        <tr id="month-{{.Date.Year}}-{{.Date.Month}}">
+                            <td class="month">{{.Name}}</td>
+
+                            <td class="num num-percentage">
+                                {{ $allAnnualChurned := .AllAnnualChurnedYear}}
+                                {{ if and .HasAnnualChurnRate $allAnnualChurned.IsNotEmpty }}
+                                    <span><a href="#churn-{{ .Name }}">{{- printf "%.2f" $allAnnualChurned.ChurnRatePercentage }}%</a></span>
+                                {{ else }}
+                                    —
+                                {{ end }}
+                            </td>
+
+                            <td class="num num-percentage">
+                                {{ if and .HasMonthlyChurnRate .ChurnedMonthly.IsNotEmpty }}
+                                    <span><a href="#churn-{{ .Name }}">{{- printf "%.2f" .ChurnedMonthly.ChurnRatePercentage }}%</a></span>
+                                {{ else }}
+                                    —
+                                {{ end }}
+                            </td>
+
+                            <td class="num" title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">
+                                {{formatInt .DownloadsTotal}}
+                            </td>
+                        </tr>
+                    {{ end }}
+                {{ end }}
+                </tbody>
+            {{ end }}
+        </table>
+    </div>
+</div>
+
+<div class="sections">
+    <div class="section section-yearly section-small">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th><h2>Years</h2></th>
+                <th class="num" title="Total Downloads (non-unique)">Downloads (unique)</th>
+                <th class="num" title="Total Downloads (non-unique)">Downloads</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .Years }}
+                <tr>
+                    <td class="date">{{.Name}}</td>
+                    <td class="num">{{ formatInt .DownloadsUnique }}</td>
+                    <td class="num">{{ formatInt .DownloadsTotal }}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th colspan="2"></th>
+                <th class="num">{{ formatInt $report.PluginInfo.Downloads }}</th>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="section section-small section-countries">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th><h2>Top Countries</h2></th>
+                <th>% of Sales</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ $max := 10 }}
+            {{ if lt (len .CountrySales) 10 }}
+                {{ $max = addInt -1 (len .CountrySales) }}
+            {{ end }}
+            {{ range (slice .CountrySales 0 $max) }}
+                <tr>
+                    <td>{{.Country}}</td>
+                    <td class="num">{{percentage .TotalUSD $reportTotalUSD}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th colspan="2" class="num">{{ len .CountrySales }} countries</th>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="section section-small section-countries">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th><h2>Top Currencies</h2></th>
+                <th>% of Sales</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ range .CurrencySales }}
+                <tr>
+                    <td>{{.Currency}}</td>
+                    <td class="num">{{percentage .TotalSalesUSD $reportTotalUSD}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th colspan="2" class="num">{{ len .CurrencySales }} currencies</th>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="section section-small section-license-type">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th><h2>Subscription Type</h2></th>
+                <th>% of Sales</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ range .SubscriptionSales }}
+                <tr>
+                    <td>{{.Name}}</td>
+                    <td class="num">{{percentage .TotalUSD $reportTotalUSD}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section section-small section-license-type">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th><h2>Customer Type</h2></th>
+                <th>% of Customers</th>
+                <th>% of Sales</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ range $report.CustomerTypeSales }}
+                <tr>
+                    <td>{{.Name}}</td>
+                    <td class="num">{{percentage .Sales.CustomerCount $report.CustomerCount}}</td>
+                    <td class="num">{{percentage .TotalUSD $reportTotalUSD}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section section-small section-weekdays">
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th><h2>Weekdays</h2></th>
+                <th>% of Sales</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .WeekdaySales }}
+                <tr>
+                    <td>{{.Name}}</td>
+                    <td class="num">{{percentage .TotalUSD $reportTotalUSD}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
