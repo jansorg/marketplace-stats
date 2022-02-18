@@ -1,6 +1,9 @@
 package marketplace
 
-import "strconv"
+import (
+	"encoding/json"
+	"strconv"
+)
 
 type PurchaseInfo struct {
 	ProductCode string `json:"productCode"`
@@ -83,10 +86,10 @@ type PluginInfo struct {
 	//"cdate": 1601924313000,
 	//"family": "intellij",
 
-	URLs                map[string]string `json:"urls"`
-	Tags                []Tag             `json:"tags"`
-	RemovalRequested    bool              `json:"removalRequested"`
-	HasUnapprovedUpdate bool              `json:"hasUnapprovedUpdate"`
-	ReadyForSale        bool              `json:"readyForSale"`
-	IconMarketplacePath string            `json:"icon"`
+	URLs                map[string]json.RawMessage `json:"urls"`
+	Tags                []Tag                      `json:"tags"`
+	RemovalRequested    bool                       `json:"removalRequested"`
+	HasUnapprovedUpdate bool                       `json:"hasUnapprovedUpdate"`
+	ReadyForSale        bool                       `json:"readyForSale"`
+	IconMarketplacePath string                     `json:"icon"`
 }
