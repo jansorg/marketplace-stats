@@ -13,10 +13,10 @@ Pre—built binaries are available on the [releases page](https://github.com/jan
 ![First part of a random report](./random-report.jpg)
 
 # Building
-First, make sure you have installed Golang 1.15.
+First, make sure you have installed a recent version of [Golang](https://go.dev/):
 
 ```bash
-GO111MODULE=on go get github.com/jansorg/marketplace-stats
+go install github.com/jansorg/marketplace-stats@latest
 ```
 
 # Command Line Usage
