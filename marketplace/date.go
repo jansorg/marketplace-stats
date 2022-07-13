@@ -64,3 +64,20 @@ func (d YearMonthDay) Add(years, months, days int) YearMonthDay {
 	y, m, day := d.AsDate().AddDate(years, months, days).Date()
 	return NewYearMonthDay(y, int(m), day)
 }
+
+/* dateRangesTo returns a slice of begin,end tuples covering all dat */
+func (d YearMonthDay) dateRangesTo(last YearMonthDay, addYears, addMonths, addDays int) [][2]YearMonthDay {
+	var result [][2]YearMonthDay
+
+	begin := d
+	for begin.IsBefore(last) {
+		end := begin.Add(addYears, addMonths, addDays)
+		if end.IsAfter(last) {
+			end = last
+		}
+		result = append(result, [2]YearMonthDay{begin, end})
+		begin = end.AddDays(1)
+	}
+
+	return result
+}
