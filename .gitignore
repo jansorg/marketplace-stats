@@ -5,6 +5,7 @@ report.html
 marketplace-stats.iml
 marketplace-stats
 random-report
+random-report-cli
 .idea/
 dist/
 node_modules/
