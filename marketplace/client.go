@@ -1,8 +1,10 @@
 package marketplace
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"net/http"
 	"net/url"
 	"time"
@@ -11,15 +13,22 @@ import (
 type Client interface {
 	GetCurrentPluginInfo() (PluginInfo, error)
 	GetPluginInfo(id string) (PluginInfo, error)
+
 	GetCurrentPluginRating() (Rating, error)
 	GetPluginRating(id string) (Rating, error)
+
 	DownloadsMonthly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadMonthly, error)
 	DownloadsWeekly(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadAndDate, error)
 	DownloadsDaily(uniqueDownloads bool, channel, build, product, country, productCommonCode string) ([]DownloadAndDate, error)
 	Downloads(period string, uniqueDownloads bool, channel, build, product, country, productCommonCode string) (DownloadResponse, error)
 
+	// GetAllSalesInfo returns the sales of the complete lifespan of the plugin
 	GetAllSalesInfo() (Sales, error)
+	// GetSalesInfo returns the sales in the given range.
+	// If it covers more than one year, then the sales will be fetched in yearly chunks.
 	GetSalesInfo(beginDate, endDate YearMonthDay) (Sales, error)
+
+	// GetJSON performs a generic request to the marketplace, it expects that JSON data is returned
 	GetJSON(path string, params map[string]string, target interface{}) error
 }
 
@@ -164,14 +173,30 @@ func (c *client) GetAllSalesInfo() (Sales, error) {
 }
 
 func (c *client) GetSalesInfo(beginDate, endDate YearMonthDay) (Sales, error) {
-	params := map[string]string{
-		"beginDate": beginDate.String(),
-		"endDate":   endDate.String(),
+	wg, _ := errgroup.WithContext(context.Background())
+
+	// concurrently fetch sales of each year
+	ranges := beginDate.dateRangesTo(endDate, 1, 0, 0)
+	salesData := make([]Sales, len(ranges))
+	for i, r := range ranges {
+		i := i
+		r := r
+		wg.Go(func() error {
+			var err error
+			salesData[i], err = c.getSalesInfo(r[0], r[1])
+			return err
+		})
 	}
 
-	var sales []Sale
-	err := c.GetJSON(fmt.Sprintf("/api/marketplace/tempApi/plugin/%s/sales-info", c.pluginID), params, &sales)
-	return sales, err
+	if err := wg.Wait(); err != nil {
+		return nil, err
+	}
+
+	var result Sales
+	for _, data := range salesData {
+		result = append(result, data...).SortedByDate()
+	}
+	return result, nil
 }
 
 func (c *client) GetJSON(path string, params map[string]string, target interface{}) error {
@@ -204,4 +229,17 @@ func (c *client) GetJSON(path string, params map[string]string, target interface
 	}
 
 	return json.NewDecoder(resp.Body).Decode(target)
+}
+
+// getSalesInfo fetches the sales data for the given range
+// it must not be called with a range larger than one year - the remote API only allows one year at most
+func (c *client) getSalesInfo(beginDate, endDate YearMonthDay) (Sales, error) {
+	params := map[string]string{
+		"beginDate": beginDate.String(),
+		"endDate":   endDate.String(),
+	}
+
+	var sales []Sale
+	err := c.GetJSON(fmt.Sprintf("/api/marketplace/tempApi/plugin/%s/sales-info", c.pluginID), params, &sales)
+	return sales, err
 }
