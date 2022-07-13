@@ -6,8 +6,11 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-cd "$DIR/.."
-go build -o random-report ./cmds/random-report
-./random-report > ./random-report.html
-npx puppeteer-cli --wait-until "networkidle2" print ./random-report.html ./random-report.pdf
-pdftoppm -jpeg -jpegopt "quality=80,optimize=y" -r 120 -singlefile ./random-report.pdf random-report
+TARGET_DIR="$DIR/.."
+cd "$DIR"
+
+go build -o random-report-cli ./random-report
+./random-report-cli > "$TARGET_DIR/random-report.html"
+
+npx puppeteer-cli --wait-until "networkidle2" print "$TARGET_DIR/random-report.html" "$TARGET_DIR/random-report.pdf"
+pdftoppm -jpeg -jpegopt "quality=80,optimize=y" -r 120 -singlefile "$TARGET_DIR/random-report.pdf" "$TARGET_DIR/random-report"
