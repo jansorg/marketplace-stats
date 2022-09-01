@@ -181,7 +181,7 @@
         }
 
         .disabled {
-            color:var(--text-color-disabled);
+            color: var(--text-color-disabled);
         }
 
         .desc, .incomplete {
@@ -330,10 +330,13 @@
 
 <body>
 <h1>{{$report.PluginInfo.Name}}</h1>
-<h2 class="subtitle">{{.Date.Format "2006-01-02"}}<br><span title="{{ .Rating.VotesCount }} ratings = {{ .Rating.CalculateRating }}{{ range $k, $v := .Rating.Votes }}&#xA;{{$k}}★: {{$v}} votes{{ end }}">★ {{ formatFloat .Rating.CalculateRating }}</span></h2>
+<h2 class="subtitle">{{.Date.Format "2006-01-02"}}<br><span
+            title="{{ .Rating.VotesCount }} ratings = {{ .Rating.CalculateRating }}{{ range $k, $v := .Rating.Votes }}&#xA;{{$k}}★: {{$v}} votes{{ end }}">★ {{ formatFloat .Rating.CalculateRating }}</span>
+</h2>
 <h2 class="subtitle menu small">
     <a href="#section-total-sales">Total Sales</a>
     <a href="#section-sales">Sales</a>
+    <a href="#section-trials">Trials</a>
     <a href="#section-growth">Growth</a>
     <a href="#section-monthly-churned">Churned Users</a>
     <a href="#section-monthly-returned">Returned Users</a>
@@ -416,19 +419,23 @@
                     <th class="num" title="Churned annual subscribers">Annual</th>
                     <th class="num" title="Churned monthly subscribers">Monthly</th>
                     <th class="num" title="Total Downloads">Downloads</th>
+                    <th class="num" title="Number of trials this month">Trials</th>
+                    <th class="num" title="Conversions trial to license until end of month, based on sales until end of month">Conv.</th>
                 </tr>
                 </thead>
                 <tbody>
                 {{ range .Months }}
                     <tr {{ if .IsActiveMonth }}class="today"{{end}} id="month-{{.Date.Year}}-{{.Date.Month}}">
                         <td class="month">{{.Name}} {{- if .IsActiveMonth }}
-                                <span class="incomplete">(incomplete)</span>{{end}}</td>
+                            <span class="incomplete" title="incomplete month">~</span>{{end}}
+                        </td>
                         <td class="num">{{ .NewSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Fee.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.PaidOut.Format }} USD</td>
                         <td class="num">{{ .AnnualRevenueUSD.PaidOut.Format }} USD</td>
-                        <td class="num" title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{.ChurnedAnnual.Count}} churned annual users&#xA;{{.ChurnedMonthly.Count}} churned monthly users&#xA;{{.ReturnedCustomersAnnual}} returned annual&#xA;{{.ReturnedCustomersMonthly}} returned monthly">
+                        <td class="num"
+                            title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{.ChurnedAnnual.Count}} churned annual users&#xA;{{.ChurnedMonthly.Count}} churned monthly users&#xA;{{.ReturnedCustomersAnnual}} returned annual&#xA;{{.ReturnedCustomersMonthly}} returned monthly">
                             {{ .ActiveCustomersTotal }}
                         </td>
                         <td class="num num-percentage">
@@ -450,8 +457,17 @@
                                 —
                             {{ end }}
                         </td>
-                        <td class="num" title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">
+                        <td class="num"
+                            title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">
                             {{formatInt .DownloadsTotal}}
+                        </td>
+                        <td class="num">{{ if gt .TrialCountMonth 0 }}{{formatInt .TrialCountMonth}}{{ else }}—{{ end }}</td>
+                        <td class="num num-percentage">
+                            {{ if and (gt .TrialConversionsTotal 0) (gt .TrialCountTotal 0) }}
+                                <span title="{{ .TrialConversionsTotal }} of {{ .TrialCountTotal }} converted until end of month">{{- percentage .TrialConversionsTotal .TrialCountTotal }}</span>
+                            {{ else }}
+                                —
+                            {{ end }}
                         </td>
                     </tr>
                 {{ end }}
@@ -463,7 +479,7 @@
                 <th class="num">{{ $report.Sales.TotalSumUSD.Format }} USD</th>
                 <th class="num">{{ $report.Sales.FeeSumUSD.Format }} USD</th>
                 <th class="num">{{ $report.Sales.PaidOutUSD.Format }} USD</th>
-                <th colspan="5"></th>
+                <th colspan="7"></th>
             </tr>
             </tfoot>
         </table>
@@ -495,6 +511,37 @@
             <tfoot>
             <tr>
                 <th>{{ len .CountrySales }} countries</th>
+                <th colspan="2"></th>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="section section-small section-trial-countries">
+        {{ $totalTrials := len .Trials }}
+        <table class="small table-striped">
+            <thead>
+            <tr>
+                <th colspan="2"><h2>Top Trial Countries</h2></th>
+                <th>% of Trials</th>
+            </tr>
+            </thead>
+            <tbody class="small">
+            {{ $max = 10 }}
+            {{ if lt (len .CountryTrials) 10 }}
+                {{ $max = addInt -1 (len .CountryTrials) }}
+            {{ end }}
+            {{ range (slice .CountryTrials 0 $max) }}
+                <tr>
+                    <td>{{.Country}}</td>
+                    <td class="num">{{len .Transactions}}</td>
+                    <td class="num">{{percentage (len .Transactions) $totalTrials}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>{{ len .CountryTrials }} countries</th>
                 <th colspan="2"></th>
             </tr>
             </tfoot>
@@ -659,7 +706,8 @@
                             <td class="person" title="{{.Name}} ({{.Country}})">
                                 {{.Name}}
                                 <a class="noprint" href="#customer-{{.ID}}" title="Total sales">🌏</a>
-                                <a class="noprint" href="javascript:setSalesTableFilter('{{.ID}}')" title="Individual sales">🔍</a>
+                                <a class="noprint" href="javascript:setSalesTableFilter('{{.ID}}')"
+                                   title="Individual sales">🔍</a>
                                 {{if .FreeSubscription}}<span class="badge-free">free</span>{{end}}
                             </td>
                             <td>{{ .Type }}</td>
@@ -749,7 +797,8 @@
                             <td class="person" title="{{.Name}} ({{.Country}})">
                                 {{.Name}}
                                 <a class="noprint" href="#customer-{{.ID}}" title="Total sales">🌏</a>
-                                <a class="noprint" href="javascript:setSalesTableFilter('{{.ID}}')" title="Individual sales">🔍</a>
+                                <a class="noprint" href="javascript:setSalesTableFilter('{{.ID}}')"
+                                   title="Individual sales">🔍</a>
                             </td>
                             <td>{{ .Type }}</td>
                         </tr>
@@ -805,8 +854,10 @@
                                 title="{{.TotalSalesUSD.Total.Format}} USD this month">{{growthPercentage .PreviousMonth.TotalSalesUSD.Total .TotalSalesUSD.Total}}</td>
                             <td class="num {{if lt .PreviousMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}num-plus{{else}}num-minus{{end}}"
                                 title="ARR: {{.AnnualRevenueUSD.PaidOut.Format}} USD">{{growthPercentage .PreviousMonth.AnnualRevenueUSD.PaidOut .AnnualRevenueUSD.PaidOut}}</td>
-                            <td class="num {{if lt .PreviousMonth.NewSalesUSD.Total .NewSalesUSD.Total}}num-plus{{else}}num-minus{{end}}" title="Percental change of sales to new customer">{{ growthPercentage .PreviousMonth.NewSalesUSD.Total .NewSalesUSD.Total }}</td>
-                            <td class="num" title="Sales to new customer">{{ percentage .NewSalesUSD.Total .TotalSalesUSD.Total }}</td>
+                            <td class="num {{if lt .PreviousMonth.NewSalesUSD.Total .NewSalesUSD.Total}}num-plus{{else}}num-minus{{end}}"
+                                title="Percental change of sales to new customer">{{ growthPercentage .PreviousMonth.NewSalesUSD.Total .NewSalesUSD.Total }}</td>
+                            <td class="num"
+                                title="Sales to new customer">{{ percentage .NewSalesUSD.Total .TotalSalesUSD.Total }}</td>
                         </tr>
                     {{ end }}
                 {{ end }}
@@ -920,6 +971,65 @@
     {{ end }}
     </tbody>
 </table>
+
+<h2 id="section-trials">Trials</h2>
+<div class="small noprint">
+    <label for="filter-trials-customer">
+        Filter: <input type="text" id="filter-trials-customer" class="filter" placeholder="Customer ID" size="8">
+    </label>
+</div>
+<table class="section-wide table-striped small" id="trials-table">
+    <thead>
+    <tr>
+        <th class="date"><h3>Date</h3></th>
+        <th class="num"><h3>ID</h3></th>
+        <th><h3>Customer</h3></th>
+        <th><h3>Customer Type</h3></th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ $lastYear = -1 }}
+    {{ $lastMonth = -1 }}
+    {{ range $report.Trials.GroupByDate true }}
+        {{ if or (ne $lastYear .Date.Year) (ne $lastMonth .Date.Month) }}
+            <tr>
+                <th colspan="7" class="subheading">
+                    <h3><a href="#month-{{.Date.Year}}-{{.Date.Month}}">{{.Date.Month}} {{.Date.Year}}</a></h3>
+                </th>
+                {{ $lastYear = .Date.Year }}
+                {{ $lastMonth = .Date.Month }}
+            </tr>
+        {{end}}
+
+        {{ $printedDate := false }}
+        {{ range .Transactions }}
+            {{ $firstPurchaseDate := index $firstPurchases .Customer.ID }}
+
+            <tr data-customer-id="{{.Customer.ID}}">
+                <td class="date">
+                    {{ $newDate := .Date.String }}
+                    {{ if not $printedDate }}
+                        {{ $newDate }}
+                        {{ $printedDate = true }}
+                    {{ else }}
+                        <span class="date-hidden">{{ $newDate }}</span>
+                    {{ end }}
+                </td>
+                <td class="num"><a href="javascript:setTrialTableFilter('{{.Customer.ID}}')">{{.Customer.ID}}</a></td>
+                <td>
+                    {{ if index $customerSalesMap .Customer.ID }}
+                        <a href="#customer-{{.Customer.ID}}">{{.Customer.Name}}</a>
+                    {{ else }}
+                        <span class="disabled">{{.Customer.Name}}</span>
+                    {{ end }}
+                </td>
+                <td>{{.Customer.Type}}</td>
+            </tr>
+        {{ end }}
+    {{ end }}
+    </tbody>
+</table>
+
 </body>
 
 <h2 id="section-glossary">Glossary</h2>
@@ -932,7 +1042,7 @@
         </p>
         <p>ARR for the current, incomplete month is estimated based on the days left.</p>
         <p><em>This may be inaccurate.</em> Prorated purchases are currently not tracked reliably,
-          because JetBrains data isn't providing this.
+            because JetBrains data isn't providing this.
         </p>
     </div>
 
@@ -961,38 +1071,54 @@
 </div>
 
 <script type="application/javascript">
-  document.getElementById("filter-sales-customer").addEventListener("change", e => {
-    filterSalesTable(e.target.value)
-    return false
-  })
-  document.getElementById("filter-sales-customer").addEventListener("keyup", e => filterSalesTable(e.target.value))
-
-  function setSalesTableFilter(id) {
-    filterSalesTable(id)
-    location.hash = "#section-sales"
-  }
-
-  function filterSalesTable(id) {
-    const input = document.getElementById("filter-sales-customer")
-    if (input.value !== id) {
-      input.value = id
-    }
-
-    // first, show all again
-    document.querySelectorAll("#sales-table tr").forEach(e => {
-      e.classList.remove("filter-hidden")
-      e.classList.remove("filter-visible")
+    document.getElementById("filter-sales-customer").addEventListener("change", e => {
+        setSalesTableFilter(e.target.value, false)
+        return false
     })
+    document.getElementById("filter-sales-customer").addEventListener("keyup", e => setSalesTableFilter(e.target.value, false))
 
-    if (id !== "") {
-      document.querySelectorAll(`#sales-table tbody tr:not(tr[data-customer-id="${id}"])`).forEach(row => {
-        row.classList.add("filter-hidden")
-      })
-      document.querySelectorAll(`#sales-table tbody tr[data-customer-id="${id}"]`).forEach(row => {
-        row.classList.add("filter-visible")
-      })
+    document.getElementById("filter-trials-customer").addEventListener("change", e => {
+        setTrialTableFilter(e.target.value, false)
+        return false
+    })
+    document.getElementById("filter-trials-customer").addEventListener("keyup", e => setTrialTableFilter(e.target.value, false))
+
+    function setSalesTableFilter(id, jump) {
+        filterCustomerTable(id, "filter-sales-customer", "sales-table")
+        if (jump) {
+            location.hash = "#section-sales"
+        }
     }
-  }
+
+    function setTrialTableFilter(id, jump) {
+        filterCustomerTable(id, "filter-trials-customer", "trials-table")
+        if (jump) {
+            location.hash = "#section-trials"
+        }
+    }
+
+    function filterCustomerTable(id, elementId, tableId) {
+        const input = document.getElementById(elementId)
+        if (input.value !== id) {
+            input.value = id
+        }
+
+        // first, show all again
+        const tableSelector = "#" + tableId
+        document.querySelectorAll(tableSelector + " tr").forEach(e => {
+            e.classList.remove("filter-hidden")
+            e.classList.remove("filter-visible")
+        })
+
+        if (id !== "") {
+            document.querySelectorAll(`${tableSelector} tbody tr:not(tr[data-customer-id="${id}"])`).forEach(row => {
+                row.classList.add("filter-hidden")
+            })
+            document.querySelectorAll(`${tableSelector} tbody tr[data-customer-id="${id}"]`).forEach(row => {
+                row.classList.add("filter-visible")
+            })
+        }
+    }
 </script>
 
 </html>

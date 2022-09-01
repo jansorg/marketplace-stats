@@ -92,6 +92,14 @@ func (d *dummyClient) GetSalesInfo(beginDate, endDate marketplace.YearMonthDay) 
 	return d.sales.ByDateRange(beginDate, endDate), nil
 }
 
+func (d *dummyClient) GetAllTrialsInfo() (marketplace.Transactions, error) {
+	return marketplace.Transactions{}, nil
+}
+
+func (d *dummyClient) GetTrialsInfo(beginDate, endDate marketplace.YearMonthDay) (marketplace.Transactions, error) {
+	return marketplace.Transactions{}, nil
+}
+
 func (d *dummyClient) GetJSON(path string, params map[string]string, target interface{}) error {
 	panic("not supported")
 }
