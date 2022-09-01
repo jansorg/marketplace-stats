@@ -4,10 +4,11 @@ package report
 
 import (
 	"fmt"
-	"github.com/jansorg/marketplace-stats/util"
 	"html/template"
 	"strings"
 	"time"
+
+	"github.com/jansorg/marketplace-stats/util"
 
 	"github.com/jansorg/marketplace-stats/marketplace"
 	"github.com/jansorg/marketplace-stats/statistic"
@@ -34,16 +35,20 @@ type HTMLReport struct {
 	CurrencySales     []*marketplace.CurrencySales
 	WeekdaySales      []marketplace.GroupedSales
 
+	Trials        marketplace.Transactions
+	CountryTrials []marketplace.CountryTransactions
+
 	Timeline *Timeline
 }
 
-func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.Sales, client marketplace.Client, graceDays int) (*HTMLReport, error) {
+func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.Sales, allTrialsUnsorted marketplace.Transactions, client marketplace.Client, graceDays int) (*HTMLReport, error) {
 	pluginRating, err := client.GetCurrentPluginRating()
 	if err != nil {
 		return nil, err
 	}
 
 	allSales := allSalesUnsorted.SortedByDate()
+	allTrials := allTrialsUnsorted.SortedByDate()
 
 	monthlyDownloadsUnique, err := client.DownloadsMonthly(true, "", "", "", "", "")
 	if err != nil {
@@ -64,7 +69,7 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.S
 		var previousYearStats *statistic.Year
 		for year <= lastYear {
 			yearStats := statistic.NewYear(year)
-			yearStats.Update(previousYearStats, allSales, monthlyDownloadsTotal, monthlyDownloadsUnique, graceDays)
+			yearStats.Update(previousYearStats, allSales, allTrials, monthlyDownloadsTotal, monthlyDownloadsUnique, graceDays)
 
 			years = append(years, yearStats)
 			previousYearStats = yearStats
@@ -76,6 +81,17 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.S
 	week.Update(allSales)
 
 	customers := allSales.Customers().SortByID()
+
+	countryTrials := allTrials.GroupByCountry()
+	countryTrialsConverted := make(map[string]marketplace.Transactions)
+	for _, countryTransactions := range countryTrials {
+		convertedTrials := countryTransactions.Transactions.GroupByCustomer().RetainCustomers(customers)
+		var convertedTransactions marketplace.Transactions
+		for _, transactions := range convertedTrials {
+			convertedTransactions = append(convertedTransactions, transactions...)
+		}
+		countryTrialsConverted[countryTransactions.Country] = convertedTransactions
+	}
 
 	return &HTMLReport{
 		Date:                     time.Now(),
@@ -96,6 +112,8 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.S
 		AnnualSubscriptionCount:  len(allSales.ByAnnualSubscription().Customers()),
 		MonthlySubscriptionCount: len(allSales.ByMonthlySubscription().Customers()),
 		FreeSubscriptionCount:    len(allSales.ByFreeSubscription().Customers()),
+		Trials:                   allTrials,
+		CountryTrials:            countryTrials,
 	}, nil
 }
 

@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/tdewolff/minify/v2"
-	"github.com/tdewolff/minify/v2/css"
-	"github.com/tdewolff/minify/v2/html"
-	"github.com/tdewolff/minify/v2/js"
-	"github.com/tdewolff/minify/v2/svg"
 	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/css"
+	"github.com/tdewolff/minify/v2/html"
+	"github.com/tdewolff/minify/v2/js"
+	"github.com/tdewolff/minify/v2/svg"
 
 	"github.com/jansorg/marketplace-stats/marketplace"
 	"github.com/jansorg/marketplace-stats/report"
@@ -49,7 +50,8 @@ func main() {
 	token, err := getToken(*tokenParam, *tokenFileParam)
 	fatalOpt(err)
 
-	var sales []marketplace.Sale
+	var sales marketplace.Sales
+	var trials marketplace.Transactions
 	var pluginInfo marketplace.PluginInfo
 
 	client := marketplace.NewClient(*pluginID, token)
@@ -58,6 +60,9 @@ func main() {
 
 	if *fetchParam {
 		sales, err = client.GetAllSalesInfo()
+		fatalOpt(err)
+
+		trials, err = client.GetAllTrialsInfo()
 		fatalOpt(err)
 
 		// write to cache file, if it's defined
@@ -77,7 +82,7 @@ func main() {
 		fatalOpt(err)
 	}
 
-	htmlReport, err := report.NewReport(pluginInfo, sales, client, *gracePeriodDays)
+	htmlReport, err := report.NewReport(pluginInfo, sales, trials, client, *gracePeriodDays)
 	fatalOpt(err)
 
 	htmlData, err := htmlReport.Generate(*anonymizedReport)
@@ -93,7 +98,7 @@ func main() {
 	fatalOpt(err)
 
 	if *reportFileParam != "" && *reportFileParam != "-" {
-		err = ioutil.WriteFile(*reportFileParam, []byte(htmlMinified), 0600)
+		err = os.WriteFile(*reportFileParam, []byte(htmlMinified), 0600)
 		fatalOpt(err)
 	} else {
 		// print to stdout

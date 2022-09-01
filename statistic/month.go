@@ -26,6 +26,11 @@ type Month struct {
 	NewCustomersAnnual  int
 	NewCustomersMonthly int
 
+	// Trial conversions, these are totals from the beginning to the end of the current month
+	TrialCountMonth       int
+	TrialCountTotal       int
+	TrialConversionsTotal int
+
 	// Churned Customers
 	ChurnedAnnual  marketplace.ChurnedCustomers
 	ChurnedMonthly marketplace.ChurnedCustomers
@@ -188,7 +193,7 @@ func findMonth(downloads []marketplace.DownloadMonthly, yearMonth time.Time) int
 }
 
 // Update the current month's data from the complete collection of sales
-func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downloadsTotal []marketplace.DownloadMonthly, downloadsUnique []marketplace.DownloadMonthly, graceDays int) {
+func (m *Month) Update(sales marketplace.Sales, trials marketplace.Transactions, previousMonthData *Month, downloadsTotal []marketplace.DownloadMonthly, downloadsUnique []marketplace.DownloadMonthly, graceDays int) {
 	m.PreviousMonth = previousMonthData
 
 	// find download counts
@@ -231,6 +236,15 @@ func (m *Month) Update(sales marketplace.Sales, previousMonthData *Month, downlo
 
 	m.NewSalesUSD.Total = newCustomerSales.TotalSumUSD()
 	m.NewSalesUSD.Fee = newCustomerSales.FeeSumUSD()
+
+	// Trials, until end of month
+	nextMonth := m.Date.AddDate(0, 1, 0)
+	matchingTrials := trials.Before(nextMonth)
+	monthTrials := matchingTrials.ByYearMonth(marketplace.NewYearMonth(m.Date.Year(), m.Date.Month()))
+	convertedTrials := matchingTrials.GroupByCustomer().RetainCustomers(sales.Before(nextMonth).Customers())
+	m.TrialCountMonth = len(monthTrials)
+	m.TrialCountTotal = len(matchingTrials)
+	m.TrialConversionsTotal = len(convertedTrials)
 
 	// Churn, JetBrains said that there's a 7 days grace time for expired licenses
 	if m.HasAnnualChurnRate() {

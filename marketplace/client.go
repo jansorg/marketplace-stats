@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"net/http"
 	"net/url"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type Client interface {
@@ -27,6 +28,12 @@ type Client interface {
 	// GetSalesInfo returns the sales in the given range.
 	// If it covers more than one year, then the sales will be fetched in yearly chunks.
 	GetSalesInfo(beginDate, endDate YearMonthDay) (Sales, error)
+
+	// GetAllTrialsInfo returns the trial license data of the complete lifespan of the plugin
+	GetAllTrialsInfo() (Transactions, error)
+	// GetTrialsInfo returns the trial license data of the given range.
+	// If it covers more than one year, then the sales will be fetched in yearly chunks.
+	GetTrialsInfo(beginDate, endDate YearMonthDay) (Transactions, error)
 
 	// GetJSON performs a generic request to the marketplace, it expects that JSON data is returned
 	GetJSON(path string, params map[string]string, target interface{}) error
@@ -199,6 +206,38 @@ func (c *client) GetSalesInfo(beginDate, endDate YearMonthDay) (Sales, error) {
 	return result, nil
 }
 
+func (c *client) GetAllTrialsInfo() (Transactions, error) {
+	y, m, d := time.Now().Date()
+	return c.GetTrialsInfo(NewYearMonthDay(2019, 06, 25), NewYearMonthDay(y, int(m), d))
+}
+
+func (c *client) GetTrialsInfo(beginDate, endDate YearMonthDay) (Transactions, error) {
+	wg, _ := errgroup.WithContext(context.Background())
+
+	// concurrently fetch sales of each year
+	ranges := beginDate.dateRangesTo(endDate, 1, 0, 0)
+	trialData := make([]Transactions, len(ranges))
+	for i, r := range ranges {
+		i := i
+		r := r
+		wg.Go(func() error {
+			var err error
+			trialData[i], err = c.getTrialInfo(r[0], r[1])
+			return err
+		})
+	}
+
+	if err := wg.Wait(); err != nil {
+		return nil, err
+	}
+
+	var result Transactions
+	for _, data := range trialData {
+		result = append(result, data...).SortedByDate()
+	}
+	return result, nil
+}
+
 func (c *client) GetJSON(path string, params map[string]string, target interface{}) error {
 	u := url.URL{
 		Scheme: "https",
@@ -242,4 +281,16 @@ func (c *client) getSalesInfo(beginDate, endDate YearMonthDay) (Sales, error) {
 	var sales []Sale
 	err := c.GetJSON(fmt.Sprintf("/api/marketplace/tempApi/plugin/%s/sales-info", c.pluginID), params, &sales)
 	return sales, err
+}
+
+// getTrialInfo fetches the sales data for the given range
+func (c *client) getTrialInfo(beginDate, endDate YearMonthDay) (Transactions, error) {
+	params := map[string]string{
+		"beginDate": beginDate.String(),
+		"endDate":   endDate.String(),
+	}
+
+	var trialInfo []Transaction
+	err := c.GetJSON(fmt.Sprintf("/api/marketplace/plugin/%s/trials-info", c.pluginID), params, &trialInfo)
+	return trialInfo, err
 }

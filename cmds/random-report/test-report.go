@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/jansorg/marketplace-stats/marketplace"
 	"github.com/jansorg/marketplace-stats/report"
 )
 
@@ -22,7 +23,7 @@ func main() {
 	sales, err := client.GetAllSalesInfo()
 	fatalOpt(err)
 
-	r, err := report.NewReport(pluginInfo, sales, client, 7)
+	r, err := report.NewReport(pluginInfo, sales, marketplace.Transactions{}, client, 7)
 	fatalOpt(err)
 
 	html, err := r.Generate(false)

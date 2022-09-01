@@ -9,10 +9,8 @@ type Currency string
 
 func NewSale(refID string, year, month, day int, subscription Subscription, customer Customer, amount Amount, currency Currency, amountUSD Amount) Sale {
 	return Sale{
-		ReferenceID: refID,
-		Date:        NewYearMonthDay(year, month, day),
+		Transaction: NewTransaction(refID, NewYearMonthDay(year, month, day), customer),
 		Period:      subscription,
-		Customer:    customer,
 		Amount:      amount,
 		Currency:    currency,
 		AmountUSD:   amountUSD,
@@ -21,10 +19,7 @@ func NewSale(refID string, year, month, day int, subscription Subscription, cust
 
 // Sale represents a single transaction. Its structure is defined by the JetBrains API
 type Sale struct {
-	// ReferenceID is a unique ID of this transaction
-	ReferenceID string `json:"ref"`
-	// Date is the day, when this sale was made
-	Date YearMonthDay `json:"date"`
+	Transaction
 	// Amount is the amount paid by the customer, in currency 'Currency'
 	Amount Amount `json:"amount"`
 	// Currency is the currency of the transaction
@@ -33,8 +28,6 @@ type Sale struct {
 	AmountUSD Amount `json:"amountUSD"`
 	// Period defines, if the transaction was for a monthly or annual license
 	Period Subscription `json:"period"`
-	// Customer defines the customer, who paid for the license
-	Customer Customer `json:"customer"`
 }
 
 // ExchangeRate returns the exchange rate of AmountUSD / Amount
