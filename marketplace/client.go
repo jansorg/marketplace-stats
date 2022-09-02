@@ -279,7 +279,7 @@ func (c *client) getSalesInfo(beginDate, endDate YearMonthDay) (Sales, error) {
 	}
 
 	var sales []Sale
-	err := c.GetJSON(fmt.Sprintf("/api/marketplace/tempApi/plugin/%s/sales-info", c.pluginID), params, &sales)
+	err := c.GetJSON(fmt.Sprintf("/api/marketplace/plugin/%s/sales-info", c.pluginID), params, &sales)
 	return sales, err
 }
 
