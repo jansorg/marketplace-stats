@@ -10,7 +10,7 @@ import (
 type Transaction struct {
 	// ReferenceID is a unique ID of this transaction
 	ReferenceID string `json:"ref"`
-	// Date is the day, when this sale was made
+	// Date, depends on source. Either the day, when the sale was mode or when the trial expires.
 	Date YearMonthDay `json:"date"`
 	// Customer defines the customer, who paid for the license
 	Customer Customer `json:"customer"`

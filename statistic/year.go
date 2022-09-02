@@ -39,7 +39,7 @@ func (y *Year) LastMonth() *Month {
 	return y.Months[len(y.Months)-1]
 }
 
-func (y *Year) Update(previousYear *Year, sales marketplace.Sales, trials marketplace.Transactions, downloadsTotal, downloadsUnique []marketplace.DownloadMonthly, graceDays int) {
+func (y *Year) Update(previousYear *Year, sales marketplace.Sales, trials marketplace.Transactions, downloadsTotal, downloadsUnique []marketplace.DownloadMonthly, graceDays int, trialDays int) {
 	yearlySales := sales.ByYear(y.Year)
 
 	y.TotalCustomers = len(yearlySales.CustomersMap())
@@ -69,7 +69,7 @@ func (y *Year) Update(previousYear *Year, sales marketplace.Sales, trials market
 
 		for !currentMonth.After(lastMonth) {
 			month := NewMonthForDate(currentMonth)
-			month.Update(sales, trials, prevMonthData, downloadsTotal, downloadsUnique, graceDays)
+			month.Update(sales, trials, prevMonthData, downloadsTotal, downloadsUnique, graceDays, trialDays)
 
 			y.Months = append(y.Months, month)
 			currentMonth = currentMonth.AddDate(0, 1, 0)

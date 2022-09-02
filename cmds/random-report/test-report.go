@@ -23,7 +23,7 @@ func main() {
 	sales, err := client.GetAllSalesInfo()
 	fatalOpt(err)
 
-	r, err := report.NewReport(pluginInfo, sales, marketplace.Transactions{}, client, 7)
+	r, err := report.NewReport(pluginInfo, sales, marketplace.Transactions{}, client, 7, 30)
 	fatalOpt(err)
 
 	html, err := r.Generate(false)

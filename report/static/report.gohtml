@@ -419,15 +419,19 @@
                     <th class="num" title="Churned annual subscribers">Annual</th>
                     <th class="num" title="Churned monthly subscribers">Monthly</th>
                     <th class="num" title="Total Downloads">Downloads</th>
-                    <th class="num" title="Number of trials this month">Trials</th>
-                    <th class="num" title="Conversions trial to license until end of month, based on sales until end of month">Conv.</th>
+                    <th class="num" title="Number of trials end of month">New Trials</th>
+                    <th class="num" title="Conversion rate of expired trials to license until end of month">Exp. CRV</th>
                 </tr>
                 </thead>
                 <tbody>
                 {{ range .Months }}
                     <tr {{ if .IsActiveMonth }}class="today"{{end}} id="month-{{.Date.Year}}-{{.Date.Month}}">
-                        <td class="month">{{.Name}} {{- if .IsActiveMonth }}
-                            <span class="incomplete" title="incomplete month">~</span>{{end}}
+                        <td class="month">
+                            {{- if .IsActiveMonth -}}
+                                <span class="incomplete" title="incomplete month">{{.Name}} …</span>
+                            {{- else -}}
+                                {{ .Name }}
+                            {{- end -}}
                         </td>
                         <td class="num">{{ .NewSalesUSD.Total.Format }} USD</td>
                         <td class="num">{{ .TotalSalesUSD.Total.Format }} USD</td>
@@ -461,10 +465,10 @@
                             title="{{formatInt .DownloadsTotal}} total&#xA;{{formatInt .DownloadsUnique}} unique">
                             {{formatInt .DownloadsTotal}}
                         </td>
-                        <td class="num">{{ if gt .TrialCountMonth 0 }}{{formatInt .TrialCountMonth}}{{ else }}—{{ end }}</td>
+                        <td class="num">{{ if gt .TrialCountMonth 0 }}<a href="#trials-{{.Date.Year}}-{{.Date.Month}}">{{formatInt .TrialCountMonth}}</a>{{ else }}—{{ end }}</td>
                         <td class="num num-percentage">
-                            {{ if and (gt .TrialConversionsTotal 0) (gt .TrialCountTotal 0) }}
-                                <span title="{{ .TrialConversionsTotal }} of {{ .TrialCountTotal }} converted until end of month">{{- percentage .TrialConversionsTotal .TrialCountTotal }}</span>
+                            {{ if and (gt .TrialConversionsTotal 0) (gt .TrialExpiredCountTotal 0) }}
+                                <span title="{{ .TrialConversionsTotal }} of {{ .TrialExpiredCountTotal }} expired converted until end of month">{{- percentage .TrialConversionsTotal .TrialExpiredCountTotal }}</span>
                             {{ else }}
                                 —
                             {{ end }}
@@ -930,7 +934,7 @@
         {{ if or (ne $lastYear .Date.Year) (ne $lastMonth .Date.Month) }}
             <tr>
                 <th colspan="7" class="subheading">
-                    <h3><a href="#month-{{.Date.Year}}-{{.Date.Month}}">{{.Date.Month}} {{.Date.Year}}</a></h3>
+                    <h3 id="sales-{{.Date.Year}}-{{.Date.Month}}">{{.Date.Month}} {{.Date.Year}}</h3>
                 </th>
                 {{ $lastYear = .Date.Year }}
                 {{ $lastMonth = .Date.Month }}
@@ -994,7 +998,7 @@
         {{ if or (ne $lastYear .Date.Year) (ne $lastMonth .Date.Month) }}
             <tr>
                 <th colspan="7" class="subheading">
-                    <h3><a href="#month-{{.Date.Year}}-{{.Date.Month}}">{{.Date.Month}} {{.Date.Year}}</a></h3>
+                    <h3 id="trials-{{.Date.Year}}-{{.Date.Month}}">{{.Date.Month}} {{.Date.Year}}</h3>
                 </th>
                 {{ $lastYear = .Date.Year }}
                 {{ $lastMonth = .Date.Month }}

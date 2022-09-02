@@ -34,6 +34,7 @@ func main() {
 	fetchParam := flag.Bool("fetch", true, "The file where sales data is cached. Use -fetch to update it.")
 	reportFileParam := flag.String("out", "report.html", "The file where the HTML sales report is saved.")
 	gracePeriodDays := flag.Int("grace-days", 7, "The grace period in days before a subscription is shown as churned.")
+	trialsDays := flag.Int("trials-days", 30, "The length of the trial period. Usually 30 days.")
 	anonymizedReport := flag.Bool("anonymized", false, "If the report should be anonymized and not include critical data like sales.")
 	flag.Parse()
 
@@ -82,7 +83,7 @@ func main() {
 		fatalOpt(err)
 	}
 
-	htmlReport, err := report.NewReport(pluginInfo, sales, trials, client, *gracePeriodDays)
+	htmlReport, err := report.NewReport(pluginInfo, sales, trials, client, *gracePeriodDays, *trialsDays)
 	fatalOpt(err)
 
 	htmlData, err := htmlReport.Generate(*anonymizedReport)

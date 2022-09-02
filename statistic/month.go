@@ -27,9 +27,10 @@ type Month struct {
 	NewCustomersMonthly int
 
 	// Trial conversions, these are totals from the beginning to the end of the current month
-	TrialCountMonth       int
-	TrialCountTotal       int
-	TrialConversionsTotal int
+	TrialCountMonth        int
+	TrialCountTotal        int
+	TrialExpiredCountTotal int
+	TrialConversionsTotal  int
 
 	// Churned Customers
 	ChurnedAnnual  marketplace.ChurnedCustomers
@@ -193,7 +194,7 @@ func findMonth(downloads []marketplace.DownloadMonthly, yearMonth time.Time) int
 }
 
 // Update the current month's data from the complete collection of sales
-func (m *Month) Update(sales marketplace.Sales, trials marketplace.Transactions, previousMonthData *Month, downloadsTotal []marketplace.DownloadMonthly, downloadsUnique []marketplace.DownloadMonthly, graceDays int) {
+func (m *Month) Update(sales marketplace.Sales, trials marketplace.Transactions, previousMonthData *Month, downloadsTotal []marketplace.DownloadMonthly, downloadsUnique []marketplace.DownloadMonthly, graceDays int, trialDays int) {
 	m.PreviousMonth = previousMonthData
 
 	// find download counts
@@ -237,14 +238,17 @@ func (m *Month) Update(sales marketplace.Sales, trials marketplace.Transactions,
 	m.NewSalesUSD.Total = newCustomerSales.TotalSumUSD()
 	m.NewSalesUSD.Fee = newCustomerSales.FeeSumUSD()
 
-	// Trials, until end of month
+	// Trials, until end of month, but only counting expired trials because active trials may still convert
 	nextMonth := m.Date.AddDate(0, 1, 0)
-	matchingTrials := trials.Before(nextMonth)
-	monthTrials := matchingTrials.ByYearMonth(marketplace.NewYearMonth(m.Date.Year(), m.Date.Month()))
-	convertedTrials := matchingTrials.GroupByCustomer().RetainCustomers(sales.Before(nextMonth).Customers())
-	m.TrialCountMonth = len(monthTrials)
-	m.TrialCountTotal = len(matchingTrials)
-	m.TrialConversionsTotal = len(convertedTrials)
+	allTrials := trials.Before(nextMonth)
+	trialEndDate := nextMonth.AddDate(0, 0, -trialDays)
+	expiredTrials := trials.Before(trialEndDate)
+	customersEndOfMonth := sales.Before(nextMonth).Customers()
+	convertedExpiredTrials := expiredTrials.GroupByCustomer().RetainCustomers(customersEndOfMonth)
+	m.TrialCountTotal = len(allTrials)
+	m.TrialExpiredCountTotal = len(expiredTrials)
+	m.TrialConversionsTotal = len(convertedExpiredTrials)
+	m.TrialCountMonth = len(trials.ByYearMonth(marketplace.NewYearMonthByDate(m.Date)))
 
 	// Churn, JetBrains said that there's a 7 days grace time for expired licenses
 	if m.HasAnnualChurnRate() {
