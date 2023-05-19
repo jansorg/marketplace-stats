@@ -41,7 +41,14 @@ type HTMLReport struct {
 	Timeline *Timeline
 }
 
-func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.Sales, allTrialsUnsorted marketplace.Transactions, client marketplace.Client, graceDays int, trialDays int) (*HTMLReport, error) {
+func NewReport(
+	pluginInfo marketplace.PluginInfo,
+	allSalesUnsorted marketplace.Sales,
+	allTrialsUnsorted marketplace.Transactions,
+	client marketplace.Client,
+	graceDays int,
+	trialDays int,
+) (*HTMLReport, error) {
 	pluginRating, err := client.GetCurrentPluginRating()
 	if err != nil {
 		return nil, err
@@ -82,17 +89,6 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.S
 
 	customers := allSales.Customers().SortByID()
 
-	countryTrials := allTrials.GroupByCountry()
-	countryTrialsConverted := make(map[string]marketplace.Transactions)
-	for _, countryTransactions := range countryTrials {
-		convertedTrials := countryTransactions.Transactions.GroupByCustomer().RetainCustomers(customers)
-		var convertedTransactions marketplace.Transactions
-		for _, transactions := range convertedTrials {
-			convertedTransactions = append(convertedTransactions, transactions...)
-		}
-		countryTrialsConverted[countryTransactions.Country] = convertedTransactions
-	}
-
 	return &HTMLReport{
 		Date:                     time.Now(),
 		PluginInfo:               pluginInfo,
@@ -113,7 +109,7 @@ func NewReport(pluginInfo marketplace.PluginInfo, allSalesUnsorted marketplace.S
 		MonthlySubscriptionCount: len(allSales.ByMonthlySubscription().Customers()),
 		FreeSubscriptionCount:    len(allSales.ByFreeSubscription().Customers()),
 		Trials:                   allTrials,
-		CountryTrials:            countryTrials,
+		CountryTrials:            allTrials.GroupByCountry(),
 	}, nil
 }
 

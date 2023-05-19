@@ -7,6 +7,37 @@ import (
 // Currency is a currency, as used by the JetBrains API
 type Currency string
 
+type Reseller struct {
+	Code    int    `json:"code"`
+	Name    string `json:"name"`
+	Country string `json:"country"`
+	Type    string `json:"type"`
+}
+
+type SaleDiscountDescription struct {
+	Description string  `json:"description"`
+	Percent     float64 `json:"percent"`
+}
+
+type SaleSubscriptionDates struct {
+	Start YearMonthDay `json:"start"`
+	End   YearMonthDay `json:"end"`
+}
+
+type SaleLineItem struct {
+	Amount            Amount                    `json:"amount"`
+	AmountUSD         Amount                    `json:"amountUSD"`
+	Type              string                    `json:"type"`
+	Discounts         []SaleDiscountDescription `json:"discountDescriptions"`
+	LicenseIds        []string                  `json:"licenseIds"`
+	SubscriptionDates SaleSubscriptionDates     `json:"subscriptionDates"`
+}
+
+const (
+	LineItemTypeNew   = "NEW"
+	LineItemTypeRenew = "RENEW"
+)
+
 func NewSale(refID string, year, month, day int, subscription Subscription, customer Customer, amount Amount, currency Currency, amountUSD Amount) Sale {
 	return Sale{
 		Transaction: NewTransaction(refID, NewYearMonthDay(year, month, day), customer),
@@ -28,6 +59,10 @@ type Sale struct {
 	AmountUSD Amount `json:"amountUSD"`
 	// Period defines, if the transaction was for a monthly or annual license
 	Period Subscription `json:"period"`
+	// Reseller who sold the license to the customer
+	Reseller *Reseller `json:"reseller"`
+	// Individual licenses of this sale
+	LineItems []SaleLineItem `json:"lineItems"`
 }
 
 // ExchangeRate returns the exchange rate of AmountUSD / Amount

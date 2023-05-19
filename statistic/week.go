@@ -31,7 +31,7 @@ func (m *Week) Name() string {
 	return fmt.Sprintf("Week %d, %d", week, year)
 }
 
-// Update the current weeks's data from the complete collection of sales
+// Update the current week's data from the complete collection of sales
 func (m *Week) Update(sales marketplace.Sales) {
 	weekSales := sales.ByWeek(m.BeginDate.ISOWeek())
 
@@ -50,7 +50,7 @@ func (m *Week) Update(sales marketplace.Sales) {
 	}
 }
 
-//https://stackoverflow.com/questions/18624177/go-unix-timestamp-for-first-day-of-the-week-from-iso-year-week
+// https://stackoverflow.com/questions/18624177/go-unix-timestamp-for-first-day-of-the-week-from-iso-year-week
 func firstDayOfISOWeek(year int, week int, timezone *time.Location) time.Time {
 	date := time.Date(year, 0, 0, 0, 0, 0, 0, timezone)
 	isoYear, isoWeek := date.ISOWeek()
