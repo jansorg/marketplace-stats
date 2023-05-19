@@ -1,3 +1,4 @@
+{{- /*gotype: github.com/jansorg/marketplace-stats/report.HTMLReport*/ -}}
 {{ $report := . }}
 {{ $reportTotalUSD := .Sales.TotalSumUSD }}
 {{ $firstPurchases := .Sales.CustomersFirstPurchase }}
@@ -440,7 +441,7 @@
                         <td class="num">{{ .AnnualRevenueUSD.PaidOut.Format }} USD</td>
                         <td class="num"
                             title="{{.ActiveCustomersAnnual}} annual + {{.ActiveCustomersMonthly}} monthly = {{.ActiveCustomersTotal}} total&#xA;{{.NewCustomersAnnual}} new annual&#xA;{{.NewCustomersMonthly}} new monthly&#xA;{{.ChurnedAnnual.Count}} churned annual users&#xA;{{.ChurnedMonthly.Count}} churned monthly users&#xA;{{.ReturnedCustomersAnnual}} returned annual&#xA;{{.ReturnedCustomersMonthly}} returned monthly">
-                            {{ .ActiveCustomersTotal }}
+                            {{ formatInt .ActiveCustomersTotal }}
                         </td>
                         <td class="num num-percentage">
                             {{ $allAnnualChurned := .AllAnnualChurnedYear}}
@@ -578,7 +579,7 @@
         <table class="small table-striped">
             <thead>
             <tr>
-                <th colspan="2"><h2>Subscription Type</h2></th>
+                <th colspan="3"><h2>Licenses</h2></th>
                 <th>% of Sales</th>
             </tr>
             </thead>
@@ -586,6 +587,7 @@
             {{ range .SubscriptionSales }}
                 <tr>
                     <td>{{.Name}}</td>
+                    <td class="num">{{formatInt .Sales.UniqueLicenseCount}}</td>
                     <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
                     <td class="num">{{percentage .TotalUSD $reportTotalUSD}}</td>
                 </tr>
@@ -593,7 +595,7 @@
             </tbody>
             <tfoot>
             <tr>
-                <th></th>
+                <th colspan="2"></th>
                 <th class="num">{{$report.Sales.TotalSumUSD.Format}} USD</th>
                 <th class="num">100.00%</th>
             </tr>
@@ -605,7 +607,7 @@
         <table class="small table-striped">
             <thead>
             <tr>
-                <th colspan="3"><h2>Customer Type</h2></th>
+                <th colspan="3"><h2>Customers</h2></th>
                 <th>% of Sales</th>
             </tr>
             </thead>
@@ -613,8 +615,8 @@
             {{ range $report.CustomerTypeSales }}
                 <tr>
                     <td>{{.Name}}</td>
-                    <td class="num">{{.Sales.CustomerCount}}</td>
-                    <td class="num" title="{{ len .Sales }} sale(s)">{{.TotalUSD.Format}} USD</td>
+                    <td class="num">{{formatInt .Sales.CustomerCount}}</td>
+                    <td class="num">{{.TotalUSD.Format}} USD</td>
                     <td class="num">{{percentage .TotalUSD $reportTotalUSD}}</td>
                 </tr>
             {{ end }}

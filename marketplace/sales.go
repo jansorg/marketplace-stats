@@ -437,6 +437,20 @@ func (s Sales) CustomersLastPurchase() CustomerDateMap {
 	return result
 }
 
+func (s Sales) UniqueLicenseCount() int {
+	licenseIds := make(map[string]bool)
+
+	for _, sale := range s {
+		for _, items := range sale.LineItems {
+			for _, licenseId := range items.LicenseIds {
+				licenseIds[licenseId] = true
+			}
+		}
+	}
+
+	return len(licenseIds)
+}
+
 func (m CustomersMap) Without(customersMap CustomersMap) CustomersMap {
 	result := make(CustomersMap)
 	for k, v := range m {
